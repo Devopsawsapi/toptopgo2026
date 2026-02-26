@@ -1,88 +1,249 @@
 <?php
 
+use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DriverController;
-use App\Http\Controllers\Admin\KycController;
-use App\Http\Controllers\Admin\RideController;
-use App\Http\Controllers\Admin\TransactionController;
-use App\Http\Controllers\Admin\WithdrawalController;
+use App\Http\Controllers\Admin\AdminProfileController;
+use App\Http\Controllers\Admin\AdminMessageController;
+use App\Http\Controllers\Admin\AdminUserSupportController;
+use App\Http\Controllers\Admin\AdminDriverSupportController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Admin Routes
+| Admin Routes (Blade / Web uniquement)
 |--------------------------------------------------------------------------
 */
 
-
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-
-    // Users
-    Route::get('/users', [UserController::class, 'index'])->name('users');
-    Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
-    Route::post('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
-    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-
-    // Drivers
-    Route::get('/drivers', [DriverController::class, 'index'])->name('drivers');
-    Route::get('/drivers/{driver}', [DriverController::class, 'show'])->name('drivers.show');
-    Route::post('/drivers/{driver}/toggle-verification', [DriverController::class, 'toggleVerification'])->name('drivers.toggle-verification');
-
-    // KYC Verification
-    Route::get('/kyc', [KycController::class, 'index'])->name('kyc');
-    Route::get('/kyc/{driver}/review', [KycController::class, 'review'])->name('kyc.review');
-    Route::post('/kyc/{driver}/approve', [KycController::class, 'approve'])->name('kyc.approve');
-    Route::post('/kyc/{driver}/reject', [KycController::class, 'reject'])->name('kyc.reject');
-
-    // Rides
-    Route::get('/rides', [RideController::class, 'index'])->name('rides');
-    Route::get('/rides/{ride}', [RideController::class, 'show'])->name('rides.show');
-
-    // Transactions
-    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
-    Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
-
-    // Withdrawals
-    Route::get('/withdrawals', [WithdrawalController::class, 'index'])->name('withdrawals');
-    Route::post('/withdrawals/{transaction}/process', [WithdrawalController::class, 'process'])->name('withdrawals.process');
-    Route::post('/withdrawals/{transaction}/reject', [WithdrawalController::class, 'reject'])->name('withdrawals.reject');
-
-    // Settings
-    Route::get('/settings', function () {
-        return view('admin.settings');
-    })->name('settings');
-
-    // Logout
-    Route::post('/logout', function () {
-        auth()->logout();
-        return redirect('/admin/login');
-    })->name('logout');
-});
-
-// Admin Login (no auth required)
 Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/login', function () {
-        return view('admin.login');
-    })->name('login');
 
-    Route::post('/login', function () {
-        $credentials = request()->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+    /*
+    |--------------------------------------------------------------------------
+    | LOGIN ADMIN
+    |--------------------------------------------------------------------------
+    */
 
-        if (auth()->attempt($credentials)) {
-            $user = auth()->user();
-            if ($user->role !== 'admin') {
-                auth()->logout();
-                return back()->withErrors(['email' => 'Accès non autorisé']);
-            }
+    Route::get('login', function () {
+
+        if (session('admin_id')) {
             return redirect()->route('admin.dashboard');
         }
 
-        return back()->withErrors(['email' => 'Identifiants incorrects']);
-    })->name('login.submit');
+        return view('admin.login');
+
+    })->name('login');
+
+
+    Route::post('login',
+        [AdminAuthController::class, 'login']
+    )->name('login.submit');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROUTES PROTEGEES
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('admin.session')->group(function () {
+
+        /*
+        |--------------------------------------------------------------------------
+        | DASHBOARD
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('/',
+            [DashboardController::class, 'index']
+        )->name('dashboard');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | LOGOUT
+        |--------------------------------------------------------------------------
+        */
+
+        Route::post('logout',
+            [AdminAuthController::class, 'logout']
+        )->name('logout');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | GESTION DES PROFILS ADMINS
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('profiles',
+            [AdminProfileController::class, 'index']
+        )->name('profiles.index');
+
+        Route::get('profiles/create',
+            [AdminProfileController::class, 'create']
+        )->name('profiles.create');
+
+        Route::post('profiles',
+            [AdminProfileController::class, 'store']
+        )->name('profiles.store');
+
+        Route::get('profiles/{id}',
+            [AdminProfileController::class, 'show']
+        )->name('profiles.show');
+
+        Route::get('profiles/{id}/edit',
+            [AdminProfileController::class, 'edit']
+        )->name('profiles.edit');
+
+        Route::put('profiles/{id}',
+            [AdminProfileController::class, 'update']
+        )->name('profiles.update');
+
+        Route::post('profiles/{id}/block',
+            [AdminProfileController::class, 'block']
+        )->name('profiles.block');
+
+        Route::post('profiles/{id}/activate',
+            [AdminProfileController::class, 'activate']
+        )->name('profiles.activate');
+
+        Route::delete('profiles/{id}',
+            [AdminProfileController::class, 'destroy']
+        )->name('profiles.destroy');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | GESTION DES CHAUFFEURS
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('drivers',
+            [DriverController::class, 'index']
+        )->name('drivers.index');
+
+        Route::get('drivers/create',
+            [DriverController::class, 'create']
+        )->name('drivers.create');
+
+        Route::post('drivers',
+            [DriverController::class, 'store']
+        )->name('drivers.store');
+
+        Route::get('drivers/{id}',
+            [DriverController::class, 'show']
+        )->name('drivers.show');
+
+        Route::get('drivers/{id}/edit',
+            [DriverController::class, 'edit']
+        )->name('drivers.edit');
+
+        Route::put('drivers/{id}',
+            [DriverController::class, 'update']
+        )->name('drivers.update');
+
+        Route::post('drivers/{id}/approve',
+            [DriverController::class, 'approve']
+        )->name('drivers.approve');
+
+        Route::post('drivers/{id}/reject',
+            [DriverController::class, 'reject']
+        )->name('drivers.reject');
+
+        Route::post('drivers/{id}/suspend',
+            [DriverController::class, 'suspend']
+        )->name('drivers.suspend');
+
+        Route::post('drivers/{id}/activate',
+            [DriverController::class, 'activate']
+        )->name('drivers.activate');
+
+        Route::delete('drivers/{id}',
+            [DriverController::class, 'destroy']
+        )->name('drivers.destroy');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | GESTION DES CLIENTS
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('users',
+            [UserController::class, 'index']
+        )->name('users.index');
+
+        Route::get('users/{id}',
+            [UserController::class, 'show']
+        )->name('users.show');
+
+        Route::post('users/{id}/block',
+            [UserController::class, 'block']
+        )->name('users.block');
+
+        Route::post('users/{id}/activate',
+            [UserController::class, 'activate']
+        )->name('users.activate');
+
+        Route::delete('users/{id}',
+            [UserController::class, 'destroy']
+        )->name('users.destroy');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | MESSAGES USERS ↔ CHAUFFEURS
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('messages/users-drivers',
+            [AdminMessageController::class, 'index']
+        )->name('messages.index');
+
+        Route::get('messages/users-drivers/{trip}',
+            [AdminMessageController::class, 'show']
+        )->name('messages.show');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SUPPORT ADMIN ↔ UTILISATEURS
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('support/users',
+            [AdminUserSupportController::class, 'index']
+        )->name('support.users.index');
+
+        Route::get('support/users/{user}',
+            [AdminUserSupportController::class, 'show']
+        )->name('support.users.show');
+
+        Route::post('support/users/{user}/send',
+            [AdminUserSupportController::class, 'send']
+        )->name('support.users.send');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SUPPORT ADMIN ↔ CHAUFFEURS
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('support/drivers',
+            [AdminDriverSupportController::class, 'index']
+        )->name('support.drivers.index');
+
+        Route::get('support/drivers/{driver}',
+            [AdminDriverSupportController::class, 'show']
+        )->name('support.drivers.show');
+
+        Route::post('support/drivers/{driver}/send',
+            [AdminDriverSupportController::class, 'send']
+        )->name('support.drivers.send');
+
+
+    });
+
 });

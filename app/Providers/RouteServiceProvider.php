@@ -14,8 +14,6 @@ class RouteServiceProvider extends ServiceProvider
      * The path to your application's "home" route.
      *
      * Typically, users are redirected here after authentication.
-     *
-     * @var string
      */
     public const HOME = '/dashboard';
 
@@ -24,21 +22,45 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->configureRateLimiting();
+
+        $this->routes(function () {
+            // ---------------- API ROUTES ----------------
+            Route::middleware('api')
+                ->prefix('api')
+                ->group(base_path('routes/api.php'));
+
+            // ---------------- WEB ROUTES ----------------
+            Route::middleware('web')
+                ->group(base_path('routes/web.php'));
+
+            // ---------------- ADMIN ROUTES ----------------
+            Route::middleware('web')
+                ->group(base_path('routes/admin.php'));
+
+            // ---------------- SPA CATCH-ALL ----------------
+            // Redirige toutes les URLs /admin/... vers ton Blade admin
+            Route::middleware('web')
+                ->prefix('admin')
+                ->group(function () {
+                    Route::get('/{any?}', function () {
+                        return view('admin.app'); // ton fichier Blade principal
+                    })->where('any', '.*');
+                });
+        });
+    }
+
+    /**
+     * Configure the rate limiters for the application.
+     */
+    protected function configureRateLimiting(): void
+    {
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
         RateLimiter::for('auth', function (Request $request) {
             return Limit::perMinute(10)->by($request->ip());
-        });
-
-        $this->routes(function () {
-            Route::middleware('api')
-                ->prefix('api')
-                ->group(base_path('routes/api.php'));
-
-            Route::middleware('web')
-                ->group(base_path('routes/web.php'));
         });
     }
 }

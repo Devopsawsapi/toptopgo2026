@@ -1,158 +1,92 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\RideController;
-use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\WebhookController;
-use App\Http\Controllers\Api\DriverController;
-use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Auth\AdminAuthController;
+use App\Http\Controllers\Auth\DriverAuthController;
+use App\Http\Controllers\Auth\UserAuthController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\DriverController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\TripController;
+use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\WithdrawalController;
+use App\Http\Controllers\Admin\DocumentController;
+use App\Http\Controllers\Admin\SosAlertController;
+use App\Http\Controllers\Admin\StatisticsController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| AUTH ROUTES
 |--------------------------------------------------------------------------
 */
 
-/*
-|--------------------------------------------------------------------------
-| Public Routes
-|--------------------------------------------------------------------------
-*/
-
-// Auth
-Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/verify-phone', [AuthController::class, 'verifyPhone']);
-    Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+// Admin Auth
+Route::prefix('admin/auth')->group(function () {
+    Route::post('login', [AdminAuthController::class, 'login']);
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('logout', [AdminAuthController::class, 'logout']);
+        Route::get('me', [AdminAuthController::class, 'me']);
+    });
 });
 
-// Webhooks (no auth required)
-Route::prefix('webhooks')->name('webhooks.')->group(function () {
-    Route::post('/peex/collect', [WebhookController::class, 'handlePeexCollect'])->name('peex.collect');
-    Route::post('/peex/payout', [WebhookController::class, 'handlePeexPayout'])->name('peex.payout');
-    Route::post('/peex/bank-payout', [WebhookController::class, 'handlePeexBankPayout'])->name('peex.bank-payout');
-    Route::post('/mtn-momo', [WebhookController::class, 'handleMtnMomo'])->name('mtn-momo');
-    Route::post('/airtel-money', [WebhookController::class, 'handleAirtelMoney'])->name('airtel-money');
-    Route::post('/stripe', [WebhookController::class, 'handleStripe'])->name('stripe');
+// Driver Auth
+Route::prefix('driver/auth')->group(function () {
+    Route::post('register', [DriverAuthController::class, 'register']);
+    Route::post('login', [DriverAuthController::class, 'login']);
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('logout', [DriverAuthController::class, 'logout']);
+        Route::get('me', [DriverAuthController::class, 'me']);
+    });
 });
 
-/*
-|--------------------------------------------------------------------------
-| Protected Routes (Require Authentication)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware('auth:sanctum')->group(function () {
-
-    /*
-    |--------------------------------------------------------------------------
-    | User Profile
-    |--------------------------------------------------------------------------
-    */
-    Route::prefix('user')->group(function () {
-        Route::get('/profile', [UserController::class, 'profile']);
-        Route::put('/profile', [UserController::class, 'updateProfile']);
-        Route::post('/avatar', [UserController::class, 'updateAvatar']);
-        Route::put('/password', [UserController::class, 'updatePassword']);
-        Route::post('/fcm-token', [UserController::class, 'updateFcmToken']);
-        Route::post('/logout', [AuthController::class, 'logout']);
+// User Auth
+Route::prefix('user/auth')->group(function () {
+    Route::post('register', [UserAuthController::class, 'register']);
+    Route::post('login', [UserAuthController::class, 'login']);
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('logout', [UserAuthController::class, 'logout']);
+        Route::get('me', [UserAuthController::class, 'me']);
     });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Payment Routes
-    |--------------------------------------------------------------------------
-    */
-    Route::prefix('payments')->group(function () {
-
-        Route::get('/methods', [PaymentController::class, 'getPaymentMethods']);
-        Route::post('/detect-operator', [PaymentController::class, 'detectOperator']);
-        Route::post('/verify-phone', [PaymentController::class, 'verifyPhone']);
-
-        Route::post('/rides/{rideId}/pay', [PaymentController::class, 'initiateRidePayment']);
-        Route::get('/status/{reference}', [PaymentController::class, 'getPaymentStatus']);
-        Route::post('/estimate', [PaymentController::class, 'estimateBreakdown']);
-
-        Route::post('/rides/{rideId}/refund', [PaymentController::class, 'refundPayment']);
-
-        Route::get('/transactions', [PaymentController::class, 'getTransactionHistory']);
-
-        Route::get('/wallet', [PaymentController::class, 'getWalletBalance']);
-        Route::post('/withdraw', [PaymentController::class, 'requestWithdrawal']);
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Ride Routes (Passengers)
-    |--------------------------------------------------------------------------
-    */
-    Route::prefix('rides')->group(function () {
-
-        Route::post('/estimate', [RideController::class, 'estimatePrice']);
-        Route::post('/', [RideController::class, 'create']);
-        Route::get('/', [RideController::class, 'index']);
-        Route::get('/active', [RideController::class, 'getActiveRide']);
-        Route::get('/{id}', [RideController::class, 'show']);
-        Route::post('/{id}/cancel', [RideController::class, 'cancel']);
-        Route::post('/{id}/rate', [RideController::class, 'rate']);
-
-        Route::post('/search-drivers', [RideController::class, 'searchDrivers']);
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Driver Routes
-    |--------------------------------------------------------------------------
-    */
-    Route::prefix('driver')->middleware('role:driver')->group(function () {
-
-        Route::get('/profile', [DriverController::class, 'profile']);
-        Route::post('/kyc', [DriverController::class, 'submitKyc']);
-        Route::get('/kyc/status', [DriverController::class, 'kycStatus']);
-
-        Route::post('/go-online', [DriverController::class, 'goOnline']);
-        Route::post('/go-offline', [DriverController::class, 'goOffline']);
-        Route::post('/update-location', [DriverController::class, 'updateLocation']);
-
-        Route::get('/available-rides', [DriverController::class, 'availableRides']);
-        Route::post('/rides/{id}/accept', [DriverController::class, 'acceptRide']);
-        Route::post('/rides/{id}/arrive', [DriverController::class, 'arriveAtPickup']);
-        Route::post('/rides/{id}/start', [DriverController::class, 'startRide']);
-        Route::post('/rides/{id}/complete', [DriverController::class, 'completeRide']);
-        Route::post('/rides/{id}/cancel', [DriverController::class, 'cancelRide']);
-
-        Route::get('/rides/history', [DriverController::class, 'rideHistory']);
-        Route::get('/stats', [DriverController::class, 'stats']);
-        Route::get('/earnings', [DriverController::class, 'earnings']);
-    });
-
 });
 
 /*
 |--------------------------------------------------------------------------
-| Admin Routes
+| ADMIN API ROUTES
 |--------------------------------------------------------------------------
 */
+Route::prefix('admin')->name('api.admin.')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    // Super Admin
+    Route::middleware('role.permission:Super Admin')->group(function () {
+        Route::apiResource('admins', AdminUserController::class)->names('admins');
+    });
 
-    Route::get('/users', [UserController::class, 'adminIndex']);
-    Route::get('/users/{id}', [UserController::class, 'adminShow']);
-    Route::put('/users/{id}/status', [UserController::class, 'updateStatus']);
+    // Admin (gestion utilisateurs/chauffeurs)
+    Route::middleware('role.permission:Admin')->group(function () {
+        Route::apiResource('drivers', DriverController::class)->only(['index','store','show'])->names('drivers');
+        Route::apiResource('users', UserController::class)->only(['index','show'])->names('api.users');
+        Route::get('trips', [TripController::class, 'index'])->name('trips');
+    });
 
-    Route::get('/drivers', [DriverController::class, 'adminIndex']);
-    Route::get('/drivers/pending-kyc', [DriverController::class, 'pendingKyc']);
-    Route::post('/drivers/{id}/approve-kyc', [DriverController::class, 'approveKyc']);
-    Route::post('/drivers/{id}/reject-kyc', [DriverController::class, 'rejectKyc']);
+    // Finance
+    Route::middleware('role.permission:Finance Manager')->group(function () {
+        Route::apiResource('payments', PaymentController::class)->only(['index','show'])->names('payments');
+        Route::get('withdrawals', [WithdrawalController::class, 'index'])->name('withdrawals');
+    });
 
-    Route::get('/rides', [RideController::class, 'adminIndex']);
-    Route::get('/rides/{id}', [RideController::class, 'adminShow']);
+    // Compliance
+    Route::middleware('role.permission:Compliance Manager')->group(function () {
+        Route::get('documents/pending', [DocumentController::class, 'pending'])->name('documents.pending');
+        Route::get('documents/expiring', [DocumentController::class, 'expiring'])->name('documents.expiring');
+        Route::get('sos', [SosAlertController::class, 'index'])->name('sos');
+    });
 
-    Route::get('/transactions', [PaymentController::class, 'adminTransactions']);
-    Route::get('/transactions/stats', [PaymentController::class, 'transactionStats']);
+    // Commercial
+    Route::middleware('role.permission:Commercial Manager')->group(function () {
+        Route::get('stats/overview', [StatisticsController::class, 'overview'])->name('stats.overview');
+        Route::get('stats/daily', [StatisticsController::class, 'daily'])->name('stats.daily');
+        Route::get('stats/top-drivers', [StatisticsController::class, 'topDrivers'])->name('stats.top-drivers');
+    });
 });

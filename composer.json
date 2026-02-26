@@ -7,15 +7,15 @@
     "require": {
         "php": "^8.2",
         "guzzlehttp/guzzle": "^7.8",
+        "kreait/laravel-firebase": "^5.0",
         "laravel/framework": "^11.0",
-        "laravel/sanctum": "^4.0",
+        "laravel/sanctum": "^4.3",
         "laravel/tinker": "^2.9",
+        "league/flysystem-aws-s3-v3": "^3.0",
         "predis/predis": "^2.2",
         "pusher/pusher-php-server": "^7.2",
-        "stripe/stripe-php": "^13.0",
-        "kreait/laravel-firebase": "^5.0",
         "sentry/sentry-laravel": "^4.0",
-        "league/flysystem-aws-s3-v3": "^3.0"
+        "stripe/stripe-php": "^13.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

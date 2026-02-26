@@ -1,33 +1,12 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote')->hourly();
+// Vérifier les documents expirant dans 30 jours — tous les matins à 8h
+Schedule::command('toptopgo:check-documents --days=30')->dailyAt('08:00');
 
-/*
-|--------------------------------------------------------------------------
-| Scheduled Tasks
-|--------------------------------------------------------------------------
-*/
+// Nettoyer les anciennes positions GPS — chaque nuit à 2h
+Schedule::command('toptopgo:clean-locations --days=7')->dailyAt('02:00');
 
-// Clean up expired OTPs from cache (runs every hour)
-Schedule::command('cache:prune-stale-tags')->hourly();
-
-// Process pending withdrawals
-Schedule::command('payments:process-withdrawals')->everyFiveMinutes();
-
-// Update transaction statuses from payment providers
-Schedule::command('payments:sync-status')->everyTenMinutes();
-
-// Clean up abandoned rides (no driver after 15 minutes)
-Schedule::command('rides:cleanup-abandoned')->everyFiveMinutes();
-
-// Generate daily reports
-Schedule::command('reports:daily')->dailyAt('23:55');
-
-// Clean up old notifications
-Schedule::command('notifications:cleanup --days=30')->daily();
+// Rapport quotidien — chaque matin à 7h
+Schedule::command('toptopgo:daily-report')->dailyAt('07:00');

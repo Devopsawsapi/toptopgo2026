@@ -3,77 +3,80 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\User\User;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+    /**
+     * Liste des utilisateurs
+     */
     public function index(Request $request)
     {
-        $query = User::query();
+        $query = User::orderBy('created_at', 'desc');
 
-        // Search
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
+            $query->where(function ($q) use ($request) {
+                $q->where('first_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('last_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('phone', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
             });
         }
 
-        // Filter by role
-        if ($request->filled('role')) {
-            $query->where('role', $request->role);
-        }
-
-        // Filter by status
         if ($request->filled('status')) {
-            if ($request->status === 'verified') {
-                $query->whereNotNull('phone_verified_at');
-            } elseif ($request->status === 'unverified') {
-                $query->whereNull('phone_verified_at');
-            }
+            $query->where('status', $request->status);
         }
 
-        $users = $query->latest()->paginate(20);
-
-        return view('admin.users.index', compact('users'));
-    }
-
-    public function show(User $user)
-    {
-        $user->load(['rides', 'driverProfile', 'wallets']);
-
-        $stats = [
-            'total_rides' => $user->rides()->count(),
-            'completed_rides' => $user->rides()->where('status', 'completed')->count(),
-            'total_spent' => $user->rides()->where('status', 'completed')->sum('price'),
-        ];
-
-        if ($user->isDriver()) {
-            $stats['total_earnings'] = $user->driverProfile?->total_earnings ?? 0;
-            $stats['rating'] = $user->driverProfile?->rating ?? 0;
+        if ($request->filled('country')) {
+            $query->where('country', $request->country);
         }
 
-        return view('admin.users.show', compact('user', 'stats'));
+        $users    = $query->paginate(15);
+        $countries = User::select('country')->distinct()->pluck('country');
+
+        return view('admin.users.index', compact('users', 'countries'));
     }
 
-    public function toggleStatus(User $user)
+    /**
+     * Détail d'un utilisateur
+     */
+    public function show($id)
     {
-        $user->is_active = !$user->is_active;
-        $user->save();
-
-        return back()->with('success', 'Statut utilisateur mis à jour');
+        $user = User::findOrFail($id);
+        return view('admin.users.show', compact('user'));
     }
 
-    public function destroy(User $user)
+    /**
+     * Bloquer un utilisateur
+     */
+    public function block($id)
     {
-        // Soft delete
+        $user = User::findOrFail($id);
+        $user->update(['status' => 'inactive']);
+
+        return back()->with('success', $user->first_name . ' a été bloqué.');
+    }
+
+    /**
+     * Activer un utilisateur
+     */
+    public function activate($id)
+    {
+        $user = User::findOrFail($id);
+        $user->update(['status' => 'active']);
+
+        return back()->with('success', $user->first_name . ' a été activé.');
+    }
+
+    /**
+     * Supprimer un utilisateur
+     */
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
         $user->delete();
 
-        return redirect()->route('admin.users')
-            ->with('success', 'Utilisateur supprimé');
+        return back()->with('success', 'Utilisateur supprimé.');
     }
 }

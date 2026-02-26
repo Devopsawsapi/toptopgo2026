@@ -3,145 +3,200 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\DriverProfile;
-use App\Models\User;
+use App\Models\Driver\Driver;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class DriverController extends Controller
 {
-    public function index()
+    /**
+     * Liste des chauffeurs
+     */
+    public function index(Request $request)
     {
-        $drivers = DriverProfile::with('user')
-            ->latest()
-            ->paginate(15);
+        $query = Driver::orderBy('created_at', 'desc');
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('first_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('last_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('phone', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $drivers = $query->paginate(15);
 
         return view('admin.drivers.index', compact('drivers'));
     }
 
+    /**
+     * Formulaire de création
+     */
     public function create()
     {
         return view('admin.drivers.create');
     }
 
+    /**
+     * Enregistrer un nouveau chauffeur
+     */
     public function store(Request $request)
     {
         $request->validate([
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
-            'phone' => 'required|unique:users,phone',
-            'email' => 'nullable|email|unique:users,email',
-            'vehicle_brand' => 'required|string',
-            'vehicle_plate_number' => 'required|string',
-            'license_number' => 'required|string',
-            'country' => 'required|string',
+            'first_name'  => 'required|string|max:100',
+            'last_name'   => 'required|string|max:100',
+            'birth_date'  => 'required|date',
+            'birth_place' => 'required|string|max:100',
+            'country_birth' => 'required|string|max:100',
+            'phone'       => 'required|string|unique:drivers,phone',
+            'password'    => 'required|string|min:8|confirmed',
+            'vehicle_plate' => 'nullable|string|unique:drivers,vehicle_plate',
+            'profile_photo'       => 'nullable|image|max:2048',
+            'id_card_front'       => 'nullable|file|max:5120',
+            'id_card_back'        => 'nullable|file|max:5120',
+            'license_front'       => 'nullable|file|max:5120',
+            'license_back'        => 'nullable|file|max:5120',
+            'vehicle_registration'=> 'nullable|file|max:5120',
+            'insurance'           => 'nullable|file|max:5120',
         ]);
 
-        DB::beginTransaction();
+        $data = $request->except(['password', 'password_confirmation',
+            'profile_photo', 'id_card_front', 'id_card_back',
+            'license_front', 'license_back', 'vehicle_registration', 'insurance']);
 
-        try {
+        $data['password'] = Hash::make($request->password);
 
-            // 📍 Géolocalisation automatique selon pays
-            $coords = $this->getCountryCoordinates($request->country);
+        // Upload des fichiers
+        $fileFields = ['profile_photo', 'id_card_front', 'id_card_back',
+                       'license_front', 'license_back', 'vehicle_registration', 'insurance'];
 
-            // Upload images
-            $avatar = $request->file('avatar')?->store('drivers', 'public');
-            $registration = $request->file('vehicle_registration_image')?->store('vehicles', 'public');
-            $insurance = $request->file('vehicle_insurance_image')?->store('vehicles', 'public');
-            $licenseRecto = $request->file('license_image_recto')?->store('licenses', 'public');
-            $licenseVerso = $request->file('license_image_verso')?->store('licenses', 'public');
-
-            // 👤 Création user (désactivé par défaut)
-            $user = User::create([
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-                'phone' => $request->phone,
-                'email' => $request->email ?? $request->phone.'@toptopgo.com',
-                'password' => Hash::make('password123'),
-                'role' => 'driver',
-                'is_active' => false, // 🔴 Pas actif tant que KYC pas validé
-                'avatar' => $avatar,
-                'date_of_birth' => $request->date_of_birth,
-                'country_code' => $request->country,
-            ]);
-
-            // 🚗 Création profil chauffeur
-            DriverProfile::create([
-                'user_id' => $user->id,
-
-                // Permis
-                'license_number' => $request->license_number,
-                'license_expiry' => $request->license_expiry,
-                'license_image' => $licenseRecto,
-                'id_card_image' => $licenseVerso,
-
-                // Véhicule
-                'vehicle_brand' => $request->vehicle_brand,
-                'vehicle_model' => $request->vehicle_model,
-                'vehicle_plate_number' => $request->vehicle_plate_number,
-                'vehicle_registration_image' => $registration,
-                'vehicle_insurance_image' => $insurance,
-                'seats_available' => $request->seats_available ?? 4,
-
-                // 📍 Position auto
-                'latitude' => $coords['lat'],
-                'longitude' => $coords['lng'],
-
-                // 🔎 KYC
-                'kyc_status' => 'pending'
-            ]);
-
-            DB::commit();
-
-            return redirect()
-                ->route('admin.drivers.index')
-                ->with('success', 'Chauffeur enregistré (KYC en attente) ✅');
-
-        } catch (\Exception $e) {
-
-            DB::rollBack();
-
-            return back()
-                ->with('error', 'Erreur : '.$e->getMessage());
+        foreach ($fileFields as $field) {
+            if ($request->hasFile($field)) {
+                $data[$field] = $request->file($field)->store('drivers/' . $field, 'public');
+            }
         }
+
+        Driver::create($data);
+
+        return redirect()->route('admin.drivers.index')
+            ->with('success', 'Chauffeur créé avec succès.');
     }
 
-    // 📍 Mapping Pays → Coordonnées
-    private function getCountryCoordinates($country)
+    /**
+     * Détail d'un chauffeur
+     */
+    public function show($id)
     {
-        $countries = [
-
-            'France' => ['lat' => 48.8566, 'lng' => 2.3522],
-            'Belgique' => ['lat' => 50.8503, 'lng' => 4.3517],
-            'Cameroun' => ['lat' => 3.8480, 'lng' => 11.5021],
-            'Congo' => ['lat' => -4.2634, 'lng' => 15.2429],
-            'Canada' => ['lat' => 45.4215, 'lng' => -75.6972],
-            'Sénégal' => ['lat' => 14.7167, 'lng' => -17.4677],
-            'Côte d\'Ivoire' => ['lat' => 5.3599, 'lng' => -4.0083],
-
-        ];
-
-        return $countries[$country] ?? ['lat' => 0, 'lng' => 0];
-    }
-
-    public function show(DriverProfile $driver)
-    {
-        $driver->load('user');
+        $driver = Driver::findOrFail($id);
         return view('admin.drivers.show', compact('driver'));
     }
 
-    public function toggleStatus(DriverProfile $driver)
+    /**
+     * Formulaire de modification
+     */
+    public function edit($id)
     {
-        // 🚨 Activation seulement si KYC validé
-        if ($driver->kyc_status !== 'approved') {
-            return back()->with('error', 'Impossible d’activer : KYC non validé');
+        $driver = Driver::findOrFail($id);
+        return view('admin.drivers.edit', compact('driver'));
+    }
+
+    /**
+     * Mettre à jour un chauffeur
+     */
+    public function update(Request $request, $id)
+    {
+        $driver = Driver::findOrFail($id);
+
+        $request->validate([
+            'first_name'   => 'required|string|max:100',
+            'last_name'    => 'required|string|max:100',
+            'phone'        => 'required|string|unique:drivers,phone,' . $id,
+            'vehicle_plate'=> 'nullable|string|unique:drivers,vehicle_plate,' . $id,
+            'password'     => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $data = $request->except(['password', 'password_confirmation',
+            'profile_photo', 'id_card_front', 'id_card_back',
+            'license_front', 'license_back', 'vehicle_registration', 'insurance']);
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
         }
 
-        $user = $driver->user;
-        $user->is_active = !$user->is_active;
-        $user->save();
+        // Upload des fichiers
+        $fileFields = ['profile_photo', 'id_card_front', 'id_card_back',
+                       'license_front', 'license_back', 'vehicle_registration', 'insurance'];
 
-        return back()->with('success', 'Statut mis à jour');
+        foreach ($fileFields as $field) {
+            if ($request->hasFile($field)) {
+                $data[$field] = $request->file($field)->store('drivers/' . $field, 'public');
+            }
+        }
+
+        $driver->update($data);
+
+        return redirect()->route('admin.drivers.index')
+            ->with('success', 'Chauffeur modifié avec succès.');
+    }
+
+    /**
+     * Approuver un chauffeur (KYC)
+     */
+    public function approve($id)
+    {
+        $driver = Driver::findOrFail($id);
+        $driver->update(['status' => 'approved']);
+
+        return back()->with('success', $driver->first_name . ' a été approuvé.');
+    }
+
+    /**
+     * Rejeter un chauffeur (KYC)
+     */
+    public function reject($id)
+    {
+        $driver = Driver::findOrFail($id);
+        $driver->update(['status' => 'rejected']);
+
+        return back()->with('success', $driver->first_name . ' a été rejeté.');
+    }
+
+    /**
+     * Suspendre un chauffeur
+     */
+    public function suspend($id)
+    {
+        $driver = Driver::findOrFail($id);
+        $driver->update(['status' => 'suspended']);
+
+        return back()->with('success', $driver->first_name . ' a été suspendu.');
+    }
+
+    /**
+     * Réactiver un chauffeur suspendu
+     */
+    public function activate($id)
+    {
+        $driver = Driver::findOrFail($id);
+        $driver->update(['status' => 'approved']);
+
+        return back()->with('success', $driver->first_name . ' a été réactivé.');
+    }
+
+    /**
+     * Supprimer un chauffeur
+     */
+    public function destroy($id)
+    {
+        $driver = Driver::findOrFail($id);
+        $driver->tokens()->delete();
+        $driver->delete();
+
+        return back()->with('success', 'Chauffeur supprimé.');
     }
 }

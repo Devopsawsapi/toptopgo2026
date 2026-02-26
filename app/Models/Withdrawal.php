@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use App\Models\Driver\Driver;
+
+class Withdrawal extends Model
+{
+    protected $fillable = [
+        'driver_id', 'wallet_id', 'amount', 'method',
+        'phone_number', 'status', 'transaction_ref', 'processed_at',
+    ];
+
+    public function driver() { return $this->belongsTo(Driver::class); }
+    public function wallet() { return $this->belongsTo(Wallet::class); }
+}

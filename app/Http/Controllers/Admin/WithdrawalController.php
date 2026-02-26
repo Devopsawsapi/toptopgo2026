@@ -3,96 +3,81 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Transaction;
-use App\Services\Payment\PaymentService;
 use Illuminate\Http\Request;
+use App\Models\Withdrawal;
+use App\Models\AdminLog;
+use App\Notifications\WithdrawalProcessedNotification;
 
 class WithdrawalController extends Controller
 {
-    protected $paymentService;
-
-    public function __construct(PaymentService $paymentService)
-    {
-        $this->paymentService = $paymentService;
-    }
-
     public function index(Request $request)
     {
-        $query = Transaction::with('user')
-            ->where('type', 'withdrawal');
+        $query = Withdrawal::with('driver');
 
-        // Filter by status
-        $status = $request->get('status', 'pending');
-        if ($status !== 'all') {
-            $query->where('status', $status);
-        }
+        if ($request->status) $query->where('status', $request->status);
+        if ($request->from)   $query->whereDate('created_at', '>=', $request->from);
+        if ($request->to)     $query->whereDate('created_at', '<=', $request->to);
 
-        $withdrawals = $query->latest()->paginate(20);
-
-        $stats = [
-            'pending' => Transaction::where('type', 'withdrawal')
-                ->where('status', 'pending')
-                ->count(),
-            'pending_amount' => Transaction::where('type', 'withdrawal')
-                ->where('status', 'pending')
-                ->sum('amount'),
-            'processed_today' => Transaction::where('type', 'withdrawal')
-                ->where('status', 'completed')
-                ->whereDate('updated_at', today())
-                ->sum('amount'),
-        ];
-
-        return view('admin.withdrawals.index', compact('withdrawals', 'stats', 'status'));
+        return response()->json($query->latest()->paginate(20));
     }
 
-    public function process(Transaction $transaction)
+    public function approve(Request $request, $id)
     {
-        if ($transaction->type !== 'withdrawal' || $transaction->status !== 'pending') {
-            return back()->with('error', 'Transaction invalide');
+        $withdrawal = Withdrawal::findOrFail($id);
+
+        if ($withdrawal->status !== 'pending') {
+            return response()->json(['message' => 'Retrait déjà traité.'], 422);
         }
 
-        try {
-            // Process the withdrawal through payment service
-            $result = $this->paymentService->processWithdrawal($transaction);
+        $withdrawal->update([
+            'status'          => 'success',
+            'processed_at'    => now(),
+            'transaction_ref' => 'TXN-' . strtoupper(uniqid()),
+        ]);
 
-            if ($result['success']) {
-                return back()->with('success', 'Retrait traité avec succès');
-            }
+        // Notifier le chauffeur
+        $withdrawal->driver?->notify(new WithdrawalProcessedNotification($withdrawal));
 
-            return back()->with('error', $result['message'] ?? 'Erreur lors du traitement');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Erreur: ' . $e->getMessage());
-        }
+        AdminLog::create([
+            'admin_id'   => $request->user()->id,
+            'action'     => 'approve_withdrawal',
+            'model'      => 'Withdrawal',
+            'model_id'   => $withdrawal->id,
+            'new_data'   => ['status' => 'success'],
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json(['message' => 'Retrait approuvé.', 'withdrawal' => $withdrawal]);
     }
 
-    public function reject(Request $request, Transaction $transaction)
+    public function reject(Request $request, $id)
     {
-        if ($transaction->type !== 'withdrawal' || $transaction->status !== 'pending') {
-            return back()->with('error', 'Transaction invalide');
+        $request->validate(['reason' => 'nullable|string|max:255']);
+
+        $withdrawal = Withdrawal::findOrFail($id);
+
+        if ($withdrawal->status !== 'pending') {
+            return response()->json(['message' => 'Retrait déjà traité.'], 422);
         }
 
-        $request->validate([
-            'reason' => 'required|string|max:500',
+        $withdrawal->update(['status' => 'failed', 'processed_at' => now()]);
+
+        // Rembourser le wallet
+        $wallet = $withdrawal->wallet;
+        $before = $wallet->balance;
+        $wallet->increment('balance', $withdrawal->amount);
+
+        \App\Models\WalletTransaction::create([
+            'wallet_id'      => $wallet->id,
+            'type'           => 'credit',
+            'amount'         => $withdrawal->amount,
+            'balance_before' => $before,
+            'balance_after'  => $wallet->fresh()->balance,
+            'description'    => 'Remboursement retrait rejeté #' . $withdrawal->id,
         ]);
 
-        $transaction->update([
-            'status' => 'failed',
-            'metadata' => array_merge($transaction->metadata ?? [], [
-                'rejection_reason' => $request->reason,
-                'rejected_at' => now()->toISOString(),
-                'rejected_by' => auth()->id(),
-            ]),
-        ]);
+        $withdrawal->driver?->notify(new WithdrawalProcessedNotification($withdrawal));
 
-        // Refund the amount to driver's wallet
-        $wallet = $transaction->user->wallets()->where('currency', 'XAF')->first();
-        if ($wallet) {
-            $wallet->increment('balance', $transaction->amount);
-        }
-
-        // Notify driver
-        // $transaction->user->notify(new WithdrawalRejected($transaction, $request->reason));
-
-        return back()->with('success', 'Retrait rejeté');
+        return response()->json(['message' => 'Retrait rejeté et solde remboursé.']);
     }
 }
