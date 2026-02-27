@@ -99,7 +99,7 @@
                 <button type="submit"
                         class="flex-1 bg-[#1DA1F2] text-white py-3 rounded-xl font-semibold
                                hover:bg-[#FFC107] hover:text-black transition-all duration-300">
-                    ✅ Créer l'administrateur
+                    ✅ Enregistrer
                 </button>
                 <a href="{{ route('admin.profiles.index') }}"
                    class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold text-center

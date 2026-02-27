@@ -6,7 +6,7 @@
 <div class="flex justify-between items-center mb-8">
     <div>
         <h1 class="text-3xl font-bold text-gray-800">
-            👨‍💼 Gestion des <span class="text-[#1DA1F2]">Profils</span>
+            👨‍💼 GESTION DES <span class="text-[#1DA1F2]">PROFILS ADMINISTRATEURS</span>
         </h1>
         <p class="text-gray-500 text-sm mt-1">Gérez les administrateurs de la plateforme</p>
     </div>

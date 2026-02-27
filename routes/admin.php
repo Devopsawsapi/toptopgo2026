@@ -253,6 +253,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         */
 
         Route::prefix('revenus')->name('revenus.')->group(function () {
+
             Route::get('/', [RevenueController::class, 'index'])->name('index');
             Route::get('/stats', [RevenueController::class, 'stats'])->name('stats');
             Route::get('/by-country', [RevenueController::class, 'byCountry'])->name('by-country');
@@ -260,6 +261,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/by-driver', [RevenueController::class, 'byDriver'])->name('by-driver');
             Route::get('/by-client', [RevenueController::class, 'byClient'])->name('by-client');
             Route::get('/export', [RevenueController::class, 'export'])->name('export');
+
         });
 
 
@@ -270,10 +272,24 @@ Route::prefix('admin')->name('admin.')->group(function () {
         */
 
         Route::prefix('commission-rates')->name('commission-rates.')->group(function () {
+
             Route::get('/', [CommissionRateController::class, 'index'])->name('index');
+
             Route::post('/', [CommissionRateController::class, 'store'])->name('store');
-            Route::put('/{commissionRate}', [CommissionRateController::class, 'update'])->name('update');
-            Route::delete('/{commissionRate}', [CommissionRateController::class, 'destroy'])->name('destroy');
+
+            Route::put('/{commissionRate}',
+                [CommissionRateController::class, 'update']
+            )->name('update');
+
+            Route::delete('/{commissionRate}',
+                [CommissionRateController::class, 'destroy']
+            )->name('destroy');
+
+            // ROUTE EXPORT CSV (Correction erreur)
+            Route::get('/export',
+                [CommissionRateController::class, 'export']
+            )->name('export');
+
         });
 
 

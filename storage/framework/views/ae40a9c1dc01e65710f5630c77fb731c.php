@@ -32,7 +32,7 @@
                class="flex items-center px-4 py-2 rounded-lg
                hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                <?php echo e(request()->routeIs('admin.dashboard') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
-                📊 Dashboard
+                📊 DASHBOARD
             </a>
 
             <!-- MESSAGERIE -->
@@ -56,6 +56,10 @@
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                <?php echo e(request()->routeIs('admin.support.drivers.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
                 🛡 Admin ↔ Chauffeurs
+            </a>
+
+            <a href="#" class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300">
+                🆘 SOS
             </a>
 
             <!-- GESTION -->
@@ -92,7 +96,7 @@
             <a href="<?php echo e(route('admin.profiles.index')); ?>"
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                <?php echo e(request()->routeIs('admin.profiles.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
-                👤 Gestion Des Administrateurs
+                👤 Administrateurs
             </a>
 
             <!-- FINANCES -->
@@ -100,19 +104,21 @@
                 Finances
             </p>
 
-            
             <a href="<?php echo e(route('admin.revenus.index')); ?>"
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                <?php echo e(request()->routeIs('admin.revenus.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
                 💰 Revenus
             </a>
 
-            <a href="#" class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300">
+            
+            <a href="<?php echo e(route('admin.commission-rates.index')); ?>"
+               class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
+               <?php echo e(request()->routeIs('admin.commission-rates.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
                 📊 Commissions
             </a>
 
             <a href="#" class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300">
-                💱 Devises
+                💱 Partenaires Payeurs
             </a>
 
             <!-- LOCALISATION -->
