@@ -47,6 +47,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // DASHBOARD
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+        // ✅ NOUVEAU : API temps réel positions chauffeurs (AVANT drivers/{id})
+        Route::get('drivers/live', [DashboardController::class, 'liveDrivers'])->name('drivers.live');
+
         // LOGOUT
         Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
 
@@ -140,14 +143,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
         |--------------------------------------------------------------------------
         */
         Route::prefix('commission-rates')->name('commission-rates.')->group(function () {
+            Route::get('/export', [CommissionRateController::class, 'export'])->name('export');
             Route::get('/', [CommissionRateController::class, 'index'])->name('index');
             Route::post('/', [CommissionRateController::class, 'store'])->name('store');
             Route::put('/{commissionRate}', [CommissionRateController::class, 'update'])->name('update');
             Route::delete('/{commissionRate}', [CommissionRateController::class, 'destroy'])->name('destroy');
-            Route::get('/export', [CommissionRateController::class, 'export'])->name('export');
         });
 
-        // Partenaires Payeurs
+        /*
+        |--------------------------------------------------------------------------
+        | PARTENAIRES PAYEURS
+        |--------------------------------------------------------------------------
+        */
         Route::get('payments', [PaymentPartnerController::class, 'index'])->name('payments.index');
         Route::get('payments/export', [PaymentPartnerController::class, 'export'])->name('payments.export');
         Route::post('payments/withdrawals/{withdrawal}/approve', [PaymentPartnerController::class, 'approveWithdrawal'])->name('payments.approve-withdrawal');
