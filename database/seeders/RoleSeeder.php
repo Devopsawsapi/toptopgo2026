@@ -15,7 +15,7 @@ class RoleSeeder extends Seeder
             ['name' => 'Finance Manager', 'description' => 'Gestion paiements et eWallet'],
             ['name' => 'Commercial Manager', 'description' => 'Statistiques et reporting'],
             ['name' => 'Technical Support', 'description' => 'Support et tickets techniques'],
-            ['name' => 'Chauffeur', 'description' => 'Chauffeur application mobile'],
+            ['name' => 'Partenaire', 'description' => 'Chauffeur application mobile'],
         ];
 
         foreach ($roles as $role) {
