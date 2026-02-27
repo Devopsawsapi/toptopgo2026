@@ -5,6 +5,9 @@
     <title>TopTopGo Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="<?php echo e(asset('images/logo3.ico')); ?>" />
+
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -46,20 +49,37 @@
                 💬 Users ↔ Chauffeurs
             </a>
 
+            <a href="<?php echo e(route('admin.support.drivers.index')); ?>"
+   class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
+   <?php echo e(request()->routeIs('admin.support.drivers.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
+    🛡 Admin ↔ Chauffeurs
+</a>
+
             <a href="<?php echo e(route('admin.support.users.index')); ?>"
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                <?php echo e(request()->routeIs('admin.support.users.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
                 🛡 Admin ↔ Utilisateurs
             </a>
 
-            <a href="<?php echo e(route('admin.support.drivers.index')); ?>"
-               class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
-               <?php echo e(request()->routeIs('admin.support.drivers.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
-                🛡 Admin ↔ Chauffeurs
-            </a>
+            
+            <?php
+                try {
+                    $activeSos = \App\Models\SosAlert::where('status', 'active')->count();
+                } catch (\Exception $e) {
+                    $activeSos = 0;
+                }
+            ?>
 
-            <a href="#" class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300">
-                🆘 SOS
+            <a href="<?php echo e(route('admin.sos.index')); ?>"
+               class="flex justify-between items-center px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
+               <?php echo e(request()->routeIs('admin.sos.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
+                <span>🆘 SOS</span>
+                <?php if($activeSos > 0): ?>
+                    <span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
+                        <?php echo e($activeSos); ?>
+
+                    </span>
+                <?php endif; ?>
             </a>
 
             <!-- GESTION -->
@@ -110,14 +130,12 @@
                 💰 Revenus
             </a>
 
-            
             <a href="<?php echo e(route('admin.commission-rates.index')); ?>"
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                <?php echo e(request()->routeIs('admin.commission-rates.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
                 📊 Commissions
             </a>
 
-            
             <a href="<?php echo e(route('admin.payments.index')); ?>"
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                <?php echo e(request()->routeIs('admin.payments.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">

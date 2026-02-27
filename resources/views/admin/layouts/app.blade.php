@@ -49,6 +49,12 @@
                 💬 Users ↔ Chauffeurs
             </a>
 
+            <a href="{{ route('admin.support.drivers.index') }}"
+   class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
+   {{ request()->routeIs('admin.support.drivers.*') ? 'bg-[#1DA1F2] pl-6' : '' }}">
+    🛡 Admin ↔ Chauffeurs
+</a>
+
             <a href="{{ route('admin.support.users.index') }}"
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                {{ request()->routeIs('admin.support.users.*') ? 'bg-[#1DA1F2] pl-6' : '' }}">

@@ -128,113 +128,6 @@
     ),
     'rehash_on_login' => true,
   ),
-  'logging' => 
-  array (
-    'default' => 'stack',
-    'deprecations' => 
-    array (
-      'channel' => NULL,
-      'trace' => false,
-    ),
-    'channels' => 
-    array (
-      'stack' => 
-      array (
-        'driver' => 'stack',
-        'channels' => 
-        array (
-          0 => 'single',
-        ),
-        'ignore_exceptions' => false,
-      ),
-      'single' => 
-      array (
-        'driver' => 'single',
-        'path' => 'C:\\Users\\SMART\\Desktop\\Nouveau dossier\\Backendtoptopgo\\Backendtoptopgo\\storage\\logs/laravel.log',
-        'level' => 'debug',
-        'replace_placeholders' => true,
-      ),
-      'daily' => 
-      array (
-        'driver' => 'daily',
-        'path' => 'C:\\Users\\SMART\\Desktop\\Nouveau dossier\\Backendtoptopgo\\Backendtoptopgo\\storage\\logs/laravel.log',
-        'level' => 'debug',
-        'days' => 14,
-        'replace_placeholders' => true,
-      ),
-      'slack' => 
-      array (
-        'driver' => 'slack',
-        'url' => NULL,
-        'username' => 'Laravel Log',
-        'emoji' => ':boom:',
-        'level' => 'debug',
-        'replace_placeholders' => true,
-      ),
-      'papertrail' => 
-      array (
-        'driver' => 'monolog',
-        'level' => 'debug',
-        'handler' => 'Monolog\\Handler\\SyslogUdpHandler',
-        'handler_with' => 
-        array (
-          'host' => NULL,
-          'port' => NULL,
-          'connectionString' => 'tls://:',
-        ),
-        'processors' => 
-        array (
-          0 => 'Monolog\\Processor\\PsrLogMessageProcessor',
-        ),
-      ),
-      'stderr' => 
-      array (
-        'driver' => 'monolog',
-        'level' => 'debug',
-        'handler' => 'Monolog\\Handler\\StreamHandler',
-        'formatter' => NULL,
-        'with' => 
-        array (
-          'stream' => 'php://stderr',
-        ),
-        'processors' => 
-        array (
-          0 => 'Monolog\\Processor\\PsrLogMessageProcessor',
-        ),
-      ),
-      'syslog' => 
-      array (
-        'driver' => 'syslog',
-        'level' => 'debug',
-        'facility' => 8,
-        'replace_placeholders' => true,
-      ),
-      'errorlog' => 
-      array (
-        'driver' => 'errorlog',
-        'level' => 'debug',
-        'replace_placeholders' => true,
-      ),
-      'null' => 
-      array (
-        'driver' => 'monolog',
-        'handler' => 'Monolog\\Handler\\NullHandler',
-      ),
-      'emergency' => 
-      array (
-        'path' => 'C:\\Users\\SMART\\Desktop\\Nouveau dossier\\Backendtoptopgo\\Backendtoptopgo\\storage\\logs/laravel.log',
-      ),
-      'sentry' => 
-      array (
-        'driver' => 'sentry',
-      ),
-      'sentry_logs' => 
-      array (
-        'driver' => 'sentry_logs',
-        'level' => 'debug',
-      ),
-    ),
-  ),
   'mail' => 
   array (
     'default' => 'smtp',
@@ -737,6 +630,102 @@
       ),
     ),
   ),
+  'logging' => 
+  array (
+    'default' => 'stack',
+    'deprecations' => 
+    array (
+      'channel' => NULL,
+      'trace' => false,
+    ),
+    'channels' => 
+    array (
+      'stack' => 
+      array (
+        'driver' => 'stack',
+        'channels' => 
+        array (
+          0 => 'single',
+        ),
+        'ignore_exceptions' => false,
+      ),
+      'single' => 
+      array (
+        'driver' => 'single',
+        'path' => 'C:\\Users\\SMART\\Desktop\\Nouveau dossier\\Backendtoptopgo\\Backendtoptopgo\\storage\\logs/laravel.log',
+        'level' => 'error',
+      ),
+      'daily' => 
+      array (
+        'driver' => 'daily',
+        'path' => 'C:\\Users\\SMART\\Desktop\\Nouveau dossier\\Backendtoptopgo\\Backendtoptopgo\\storage\\logs/laravel.log',
+        'level' => 'error',
+        'days' => 14,
+      ),
+      'slack' => 
+      array (
+        'driver' => 'slack',
+        'url' => NULL,
+        'username' => 'Laravel Log',
+        'emoji' => ':boom:',
+        'level' => 'error',
+      ),
+      'papertrail' => 
+      array (
+        'driver' => 'monolog',
+        'level' => 'error',
+        'handler' => 'Monolog\\Handler\\SyslogUdpHandler',
+        'handler_with' => 
+        array (
+          'host' => NULL,
+          'port' => NULL,
+          'connectionString' => 'tls://:',
+        ),
+        'processors' => 
+        array (
+          0 => 'Monolog\\Processor\\PsrLogMessageProcessor',
+        ),
+      ),
+      'stderr' => 
+      array (
+        'driver' => 'monolog',
+        'level' => 'error',
+        'handler' => 'Monolog\\Handler\\StreamHandler',
+        'with' => 
+        array (
+          'stream' => 'php://stderr',
+        ),
+      ),
+      'syslog' => 
+      array (
+        'driver' => 'syslog',
+        'level' => 'error',
+      ),
+      'errorlog' => 
+      array (
+        'driver' => 'errorlog',
+        'level' => 'error',
+      ),
+      'null' => 
+      array (
+        'driver' => 'monolog',
+        'handler' => 'Monolog\\Handler\\NullHandler',
+      ),
+      'emergency' => 
+      array (
+        'path' => 'C:\\Users\\SMART\\Desktop\\Nouveau dossier\\Backendtoptopgo\\Backendtoptopgo\\storage\\logs/laravel.log',
+      ),
+      'sentry' => 
+      array (
+        'driver' => 'sentry',
+      ),
+      'sentry_logs' => 
+      array (
+        'driver' => 'sentry_logs',
+        'level' => 'error',
+      ),
+    ),
+  ),
   'payments' => 
   array (
     'default' => 'peex',
@@ -969,7 +958,7 @@
     'traces_sample_rate' => 1.0,
     'profiles_sample_rate' => NULL,
     'enable_logs' => false,
-    'logs_channel_level' => 'debug',
+    'logs_channel_level' => 'error',
     'send_default_pii' => false,
     'ignore_transactions' => 
     array (
