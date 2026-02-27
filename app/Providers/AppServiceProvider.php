@@ -13,6 +13,7 @@ use App\Observers\CourseObserver;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,7 +34,7 @@ class AppServiceProvider extends ServiceProvider
 
         // ✅ Force HTTPS en production
         if (config('app.env') === 'production') {
-            \URL::forceScheme('https');
+            URL::forceScheme('https');
         }
     }
 }
