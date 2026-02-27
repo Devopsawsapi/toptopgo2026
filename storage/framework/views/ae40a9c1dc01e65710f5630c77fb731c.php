@@ -52,7 +52,6 @@
                 🛡 Admin ↔ Utilisateurs
             </a>
 
-            
             <a href="<?php echo e(route('admin.support.drivers.index')); ?>"
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                <?php echo e(request()->routeIs('admin.support.drivers.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
@@ -101,7 +100,10 @@
                 Finances
             </p>
 
-            <a href="#" class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300">
+            
+            <a href="<?php echo e(route('admin.revenus.index')); ?>"
+               class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
+               <?php echo e(request()->routeIs('admin.revenus.*') ? 'bg-[#1DA1F2] pl-6' : ''); ?>">
                 💰 Revenus
             </a>
 

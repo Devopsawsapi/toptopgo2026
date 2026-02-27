@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\AdminMessageController;
 use App\Http\Controllers\Admin\AdminUserSupportController;
 use App\Http\Controllers\Admin\AdminDriverSupportController;
+use App\Http\Controllers\Admin\RevenueController;
+use App\Http\Controllers\Admin\CommissionRateController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -242,6 +244,37 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('support/drivers/{driver}/send',
             [AdminDriverSupportController::class, 'send']
         )->name('support.drivers.send');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | REVENUS
+        |--------------------------------------------------------------------------
+        */
+
+        Route::prefix('revenus')->name('revenus.')->group(function () {
+            Route::get('/', [RevenueController::class, 'index'])->name('index');
+            Route::get('/stats', [RevenueController::class, 'stats'])->name('stats');
+            Route::get('/by-country', [RevenueController::class, 'byCountry'])->name('by-country');
+            Route::get('/by-city', [RevenueController::class, 'byCity'])->name('by-city');
+            Route::get('/by-driver', [RevenueController::class, 'byDriver'])->name('by-driver');
+            Route::get('/by-client', [RevenueController::class, 'byClient'])->name('by-client');
+            Route::get('/export', [RevenueController::class, 'export'])->name('export');
+        });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TAUX DE COMMISSION
+        |--------------------------------------------------------------------------
+        */
+
+        Route::prefix('commission-rates')->name('commission-rates.')->group(function () {
+            Route::get('/', [CommissionRateController::class, 'index'])->name('index');
+            Route::post('/', [CommissionRateController::class, 'store'])->name('store');
+            Route::put('/{commissionRate}', [CommissionRateController::class, 'update'])->name('update');
+            Route::delete('/{commissionRate}', [CommissionRateController::class, 'destroy'])->name('destroy');
+        });
 
 
     });

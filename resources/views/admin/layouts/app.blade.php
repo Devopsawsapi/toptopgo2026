@@ -52,7 +52,6 @@
                 🛡 Admin ↔ Utilisateurs
             </a>
 
-            {{-- ✅ CORRIGÉ : route Admin ↔ Chauffeurs --}}
             <a href="{{ route('admin.support.drivers.index') }}"
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                {{ request()->routeIs('admin.support.drivers.*') ? 'bg-[#1DA1F2] pl-6' : '' }}">
@@ -100,7 +99,10 @@
                 Finances
             </p>
 
-            <a href="#" class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300">
+            {{-- ✅ MIS À JOUR : lien Revenus --}}
+            <a href="{{ route('admin.revenus.index') }}"
+               class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
+               {{ request()->routeIs('admin.revenus.*') ? 'bg-[#1DA1F2] pl-6' : '' }}">
                 💰 Revenus
             </a>
 
