@@ -5,6 +5,9 @@
     <title>TopTopGo Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('images/logo3.ico') }}" />
+
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -109,14 +112,12 @@
                 💰 Revenus
             </a>
 
-            {{-- ✅ MIS À JOUR : lien Commissions --}}
             <a href="{{ route('admin.commission-rates.index') }}"
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                {{ request()->routeIs('admin.commission-rates.*') ? 'bg-[#1DA1F2] pl-6' : '' }}">
                 📊 Commissions
             </a>
 
-            {{-- ✅ Lien Partenaires Payeurs --}}
             <a href="{{ route('admin.payments.index') }}"
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
                {{ request()->routeIs('admin.payments.*') ? 'bg-[#1DA1F2] pl-6' : '' }}">
