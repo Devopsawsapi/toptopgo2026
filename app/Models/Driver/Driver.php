@@ -30,6 +30,64 @@ class Driver extends Authenticatable
 
     protected $hidden = ['password'];
 
+    // ================================================================
+    // ACCESSORS — Retourne toujours une URL complète pour les fichiers
+    // Gère 3 cas :
+    //   1. URL complète Backblaze  → retournée telle quelle
+    //   2. Chemin relatif          → préfixé avec l'endpoint Backblaze
+    //   3. Null / vide             → retourne null
+    // ================================================================
+
+    private function resolveFileUrl(?string $value): ?string
+    {
+        if (empty($value)) return null;
+
+        // Déjà une URL complète
+        if (str_starts_with($value, 'http')) return $value;
+
+        // Chemin relatif → construire l'URL Backblaze
+        return rtrim(config('filesystems.disks.backblaze.url'), '/') . '/' . ltrim($value, '/');
+    }
+
+    public function getProfilePhotoAttribute($value): ?string
+    {
+        return $this->resolveFileUrl($value);
+    }
+
+    public function getIdCardFrontAttribute($value): ?string
+    {
+        return $this->resolveFileUrl($value);
+    }
+
+    public function getIdCardBackAttribute($value): ?string
+    {
+        return $this->resolveFileUrl($value);
+    }
+
+    public function getLicenseFrontAttribute($value): ?string
+    {
+        return $this->resolveFileUrl($value);
+    }
+
+    public function getLicenseBackAttribute($value): ?string
+    {
+        return $this->resolveFileUrl($value);
+    }
+
+    public function getVehicleRegistrationAttribute($value): ?string
+    {
+        return $this->resolveFileUrl($value);
+    }
+
+    public function getInsuranceAttribute($value): ?string
+    {
+        return $this->resolveFileUrl($value);
+    }
+
+    // ================================================================
+    // RELATIONS
+    // ================================================================
+
     public function role()
     {
         return $this->belongsTo(Role::class, 'role_id');

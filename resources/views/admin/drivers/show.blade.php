@@ -23,8 +23,13 @@
     <div class="bg-white rounded-2xl shadow-md p-8 mb-6">
         <div class="flex items-center gap-6 mb-6">
             @if($driver->profile_photo)
-                <img src="{{ asset('storage/' . $driver->profile_photo) }}"
-                     class="w-20 h-20 rounded-full object-cover border-4 border-[#1DA1F2]">
+                {{-- ✅ L'accessor retourne directement l'URL complète Backblaze --}}
+                <img src="{{ $driver->profile_photo }}"
+                     class="w-20 h-20 rounded-full object-cover border-4 border-[#1DA1F2]"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="w-20 h-20 rounded-full bg-[#1DA1F2] items-center justify-center text-3xl font-bold text-white hidden">
+                    {{ strtoupper(substr($driver->first_name, 0, 1)) }}
+                </div>
             @else
                 <div class="w-20 h-20 rounded-full bg-[#1DA1F2] flex items-center justify-center text-3xl font-bold text-white">
                     {{ strtoupper(substr($driver->first_name, 0, 1)) }}
@@ -103,7 +108,7 @@
         </div>
     </div>
 
-    <!-- DOCUMENTS -->
+    <!-- DOCUMENTS KYC -->
     <div class="bg-white rounded-2xl shadow-md p-8 mb-6">
         <h2 class="text-lg font-bold text-gray-700 mb-6 pb-3 border-b border-gray-100">📄 Documents KYC</h2>
 
@@ -127,14 +132,19 @@
                 </div>
                 <div class="p-3">
                     @if($driver->{$doc['field']})
-                        @php $ext = pathinfo($driver->{$doc['field']}, PATHINFO_EXTENSION); @endphp
-                        @if(in_array(strtolower($ext), ['jpg','jpeg','png','webp']))
-                            <a href="{{ asset('storage/' . $driver->{$doc['field']}) }}" target="_blank">
-                                <img src="{{ asset('storage/' . $driver->{$doc['field']}) }}"
-                                     class="w-full h-32 object-cover rounded-lg hover:opacity-90 transition cursor-pointer">
+                        @php
+                            {{-- ✅ L'accessor retourne l'URL complète — on extrait juste l'extension --}}
+                            $fileUrl = $driver->{$doc['field']};
+                            $ext = strtolower(pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
+                        @endphp
+                        @if(in_array($ext, ['jpg','jpeg','png','webp']))
+                            <a href="{{ $fileUrl }}" target="_blank">
+                                <img src="{{ $fileUrl }}"
+                                     class="w-full h-32 object-cover rounded-lg hover:opacity-90 transition cursor-pointer"
+                                     onerror="this.parentElement.innerHTML='<div class=\'h-32 bg-red-50 rounded-lg flex items-center justify-center text-red-400 text-sm\'>Image non accessible</div>'">
                             </a>
                         @else
-                            <a href="{{ asset('storage/' . $driver->{$doc['field']}) }}" target="_blank"
+                            <a href="{{ $fileUrl }}" target="_blank"
                                class="flex items-center gap-2 text-[#1DA1F2] hover:underline text-sm">
                                 📎 Voir le fichier
                             </a>
