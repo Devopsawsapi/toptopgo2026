@@ -55,14 +55,24 @@
                 🛡 Admin ↔ Utilisateurs
             </a>
 
-            <a href="{{ route('admin.support.drivers.index') }}"
-               class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
-               {{ request()->routeIs('admin.support.drivers.*') ? 'bg-[#1DA1F2] pl-6' : '' }}">
-                🛡 Admin ↔ Chauffeurs
-            </a>
+            {{-- SOS avec badge rouge animé --}}
+            @php
+                try {
+                    $activeSos = \App\Models\SosAlert::where('status', 'active')->count();
+                } catch (\Exception $e) {
+                    $activeSos = 0;
+                }
+            @endphp
 
-            <a href="#" class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300">
-                🆘 SOS
+            <a href="{{ route('admin.sos.index') }}"
+               class="flex justify-between items-center px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
+               {{ request()->routeIs('admin.sos.*') ? 'bg-[#1DA1F2] pl-6' : '' }}">
+                <span>🆘 SOS</span>
+                @if($activeSos > 0)
+                    <span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
+                        {{ $activeSos }}
+                    </span>
+                @endif
             </a>
 
             <!-- GESTION -->

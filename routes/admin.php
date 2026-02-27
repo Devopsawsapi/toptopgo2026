@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\AdminDriverSupportController;
 use App\Http\Controllers\Admin\RevenueController;
 use App\Http\Controllers\Admin\CommissionRateController;
 use App\Http\Controllers\Admin\PaymentPartnerController;
+use App\Http\Controllers\Admin\SosAlertController;  // ✅ NOUVEAU
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,7 +48,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // DASHBOARD
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-        // ✅ NOUVEAU : API temps réel positions chauffeurs (AVANT drivers/{id})
+        // ✅ API temps réel positions chauffeurs (AVANT drivers/{id})
         Route::get('drivers/live', [DashboardController::class, 'liveDrivers'])->name('drivers.live');
 
         // LOGOUT
@@ -121,6 +122,20 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('support/drivers', [AdminDriverSupportController::class, 'index'])->name('support.drivers.index');
         Route::get('support/drivers/{driver}', [AdminDriverSupportController::class, 'show'])->name('support.drivers.show');
         Route::post('support/drivers/{driver}/send', [AdminDriverSupportController::class, 'send'])->name('support.drivers.send');
+
+        /*
+        |--------------------------------------------------------------------------
+        | ✅ SOS ALERTES
+        |--------------------------------------------------------------------------
+        */
+        Route::prefix('sos')->name('sos.')->group(function () {
+            Route::get('/live',        [SosAlertController::class, 'live'])->name('live');        // API JSON (AVANT /{id})
+            Route::get('/',            [SosAlertController::class, 'index'])->name('index');
+            Route::post('/treat-all',  [SosAlertController::class, 'treatAll'])->name('treat-all');
+            Route::get('/{id}',        [SosAlertController::class, 'show'])->name('show');
+            Route::post('/{id}/treat', [SosAlertController::class, 'treat'])->name('treat');
+            Route::delete('/{id}',     [SosAlertController::class, 'destroy'])->name('destroy');
+        });
 
         /*
         |--------------------------------------------------------------------------
