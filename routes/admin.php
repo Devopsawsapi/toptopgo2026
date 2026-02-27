@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminUserSupportController;
 use App\Http\Controllers\Admin\AdminDriverSupportController;
 use App\Http\Controllers\Admin\RevenueController;
 use App\Http\Controllers\Admin\CommissionRateController;
+use App\Http\Controllers\Admin\PaymentPartnerController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,20 +28,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
     */
 
     Route::get('login', function () {
-
         if (session('admin_id')) {
             return redirect()->route('admin.dashboard');
         }
-
         return view('admin.login');
-
     })->name('login');
 
-
-    Route::post('login',
-        [AdminAuthController::class, 'login']
-    )->name('login.submit');
-
+    Route::post('login', [AdminAuthController::class, 'login'])->name('login.submit');
 
     /*
     |--------------------------------------------------------------------------
@@ -50,210 +44,87 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::middleware('admin.session')->group(function () {
 
-        /*
-        |--------------------------------------------------------------------------
-        | DASHBOARD
-        |--------------------------------------------------------------------------
-        */
+        // DASHBOARD
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-        Route::get('/',
-            [DashboardController::class, 'index']
-        )->name('dashboard');
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | LOGOUT
-        |--------------------------------------------------------------------------
-        */
-
-        Route::post('logout',
-            [AdminAuthController::class, 'logout']
-        )->name('logout');
-
+        // LOGOUT
+        Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
 
         /*
         |--------------------------------------------------------------------------
         | GESTION DES PROFILS ADMINS
         |--------------------------------------------------------------------------
         */
-
-        Route::get('profiles',
-            [AdminProfileController::class, 'index']
-        )->name('profiles.index');
-
-        Route::get('profiles/create',
-            [AdminProfileController::class, 'create']
-        )->name('profiles.create');
-
-        Route::post('profiles',
-            [AdminProfileController::class, 'store']
-        )->name('profiles.store');
-
-        Route::get('profiles/{id}',
-            [AdminProfileController::class, 'show']
-        )->name('profiles.show');
-
-        Route::get('profiles/{id}/edit',
-            [AdminProfileController::class, 'edit']
-        )->name('profiles.edit');
-
-        Route::put('profiles/{id}',
-            [AdminProfileController::class, 'update']
-        )->name('profiles.update');
-
-        Route::post('profiles/{id}/block',
-            [AdminProfileController::class, 'block']
-        )->name('profiles.block');
-
-        Route::post('profiles/{id}/activate',
-            [AdminProfileController::class, 'activate']
-        )->name('profiles.activate');
-
-        Route::delete('profiles/{id}',
-            [AdminProfileController::class, 'destroy']
-        )->name('profiles.destroy');
-
+        Route::get('profiles', [AdminProfileController::class, 'index'])->name('profiles.index');
+        Route::get('profiles/create', [AdminProfileController::class, 'create'])->name('profiles.create');
+        Route::post('profiles', [AdminProfileController::class, 'store'])->name('profiles.store');
+        Route::get('profiles/{id}', [AdminProfileController::class, 'show'])->name('profiles.show');
+        Route::get('profiles/{id}/edit', [AdminProfileController::class, 'edit'])->name('profiles.edit');
+        Route::put('profiles/{id}', [AdminProfileController::class, 'update'])->name('profiles.update');
+        Route::post('profiles/{id}/block', [AdminProfileController::class, 'block'])->name('profiles.block');
+        Route::post('profiles/{id}/activate', [AdminProfileController::class, 'activate'])->name('profiles.activate');
+        Route::delete('profiles/{id}', [AdminProfileController::class, 'destroy'])->name('profiles.destroy');
 
         /*
         |--------------------------------------------------------------------------
         | GESTION DES CHAUFFEURS
         |--------------------------------------------------------------------------
         */
-
-        Route::get('drivers',
-            [DriverController::class, 'index']
-        )->name('drivers.index');
-
-        Route::get('drivers/create',
-            [DriverController::class, 'create']
-        )->name('drivers.create');
-
-        Route::post('drivers',
-            [DriverController::class, 'store']
-        )->name('drivers.store');
-
-        Route::get('drivers/{id}',
-            [DriverController::class, 'show']
-        )->name('drivers.show');
-
-        Route::get('drivers/{id}/edit',
-            [DriverController::class, 'edit']
-        )->name('drivers.edit');
-
-        Route::put('drivers/{id}',
-            [DriverController::class, 'update']
-        )->name('drivers.update');
-
-        Route::post('drivers/{id}/approve',
-            [DriverController::class, 'approve']
-        )->name('drivers.approve');
-
-        Route::post('drivers/{id}/reject',
-            [DriverController::class, 'reject']
-        )->name('drivers.reject');
-
-        Route::post('drivers/{id}/suspend',
-            [DriverController::class, 'suspend']
-        )->name('drivers.suspend');
-
-        Route::post('drivers/{id}/activate',
-            [DriverController::class, 'activate']
-        )->name('drivers.activate');
-
-        Route::delete('drivers/{id}',
-            [DriverController::class, 'destroy']
-        )->name('drivers.destroy');
-
+        Route::get('drivers', [DriverController::class, 'index'])->name('drivers.index');
+        Route::get('drivers/create', [DriverController::class, 'create'])->name('drivers.create');
+        Route::post('drivers', [DriverController::class, 'store'])->name('drivers.store');
+        Route::get('drivers/{id}', [DriverController::class, 'show'])->name('drivers.show');
+        Route::get('drivers/{id}/edit', [DriverController::class, 'edit'])->name('drivers.edit');
+        Route::put('drivers/{id}', [DriverController::class, 'update'])->name('drivers.update');
+        Route::post('drivers/{id}/approve', [DriverController::class, 'approve'])->name('drivers.approve');
+        Route::post('drivers/{id}/reject', [DriverController::class, 'reject'])->name('drivers.reject');
+        Route::post('drivers/{id}/suspend', [DriverController::class, 'suspend'])->name('drivers.suspend');
+        Route::post('drivers/{id}/activate', [DriverController::class, 'activate'])->name('drivers.activate');
+        Route::delete('drivers/{id}', [DriverController::class, 'destroy'])->name('drivers.destroy');
 
         /*
         |--------------------------------------------------------------------------
         | GESTION DES CLIENTS
         |--------------------------------------------------------------------------
         */
-
-        Route::get('users',
-            [UserController::class, 'index']
-        )->name('users.index');
-
-        Route::get('users/{id}',
-            [UserController::class, 'show']
-        )->name('users.show');
-
-        Route::post('users/{id}/block',
-            [UserController::class, 'block']
-        )->name('users.block');
-
-        Route::post('users/{id}/activate',
-            [UserController::class, 'activate']
-        )->name('users.activate');
-
-        Route::delete('users/{id}',
-            [UserController::class, 'destroy']
-        )->name('users.destroy');
-
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::get('users/{id}', [UserController::class, 'show'])->name('users.show');
+        Route::post('users/{id}/block', [UserController::class, 'block'])->name('users.block');
+        Route::post('users/{id}/activate', [UserController::class, 'activate'])->name('users.activate');
+        Route::delete('users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
         /*
         |--------------------------------------------------------------------------
         | MESSAGES USERS ↔ CHAUFFEURS
         |--------------------------------------------------------------------------
         */
-
-        Route::get('messages/users-drivers',
-            [AdminMessageController::class, 'index']
-        )->name('messages.index');
-
-        Route::get('messages/users-drivers/{trip}',
-            [AdminMessageController::class, 'show']
-        )->name('messages.show');
-
+        Route::get('messages/users-drivers', [AdminMessageController::class, 'index'])->name('messages.index');
+        Route::get('messages/users-drivers/{trip}', [AdminMessageController::class, 'show'])->name('messages.show');
 
         /*
         |--------------------------------------------------------------------------
         | SUPPORT ADMIN ↔ UTILISATEURS
         |--------------------------------------------------------------------------
         */
-
-        Route::get('support/users',
-            [AdminUserSupportController::class, 'index']
-        )->name('support.users.index');
-
-        Route::get('support/users/{user}',
-            [AdminUserSupportController::class, 'show']
-        )->name('support.users.show');
-
-        Route::post('support/users/{user}/send',
-            [AdminUserSupportController::class, 'send']
-        )->name('support.users.send');
-
+        Route::get('support/users', [AdminUserSupportController::class, 'index'])->name('support.users.index');
+        Route::get('support/users/{user}', [AdminUserSupportController::class, 'show'])->name('support.users.show');
+        Route::post('support/users/{user}/send', [AdminUserSupportController::class, 'send'])->name('support.users.send');
 
         /*
         |--------------------------------------------------------------------------
         | SUPPORT ADMIN ↔ CHAUFFEURS
         |--------------------------------------------------------------------------
         */
-
-        Route::get('support/drivers',
-            [AdminDriverSupportController::class, 'index']
-        )->name('support.drivers.index');
-
-        Route::get('support/drivers/{driver}',
-            [AdminDriverSupportController::class, 'show']
-        )->name('support.drivers.show');
-
-        Route::post('support/drivers/{driver}/send',
-            [AdminDriverSupportController::class, 'send']
-        )->name('support.drivers.send');
-
+        Route::get('support/drivers', [AdminDriverSupportController::class, 'index'])->name('support.drivers.index');
+        Route::get('support/drivers/{driver}', [AdminDriverSupportController::class, 'show'])->name('support.drivers.show');
+        Route::post('support/drivers/{driver}/send', [AdminDriverSupportController::class, 'send'])->name('support.drivers.send');
 
         /*
         |--------------------------------------------------------------------------
         | REVENUS
         |--------------------------------------------------------------------------
         */
-
         Route::prefix('revenus')->name('revenus.')->group(function () {
-
             Route::get('/', [RevenueController::class, 'index'])->name('index');
             Route::get('/stats', [RevenueController::class, 'stats'])->name('stats');
             Route::get('/by-country', [RevenueController::class, 'byCountry'])->name('by-country');
@@ -261,37 +132,26 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/by-driver', [RevenueController::class, 'byDriver'])->name('by-driver');
             Route::get('/by-client', [RevenueController::class, 'byClient'])->name('by-client');
             Route::get('/export', [RevenueController::class, 'export'])->name('export');
-
         });
-
 
         /*
         |--------------------------------------------------------------------------
         | TAUX DE COMMISSION
         |--------------------------------------------------------------------------
         */
-
         Route::prefix('commission-rates')->name('commission-rates.')->group(function () {
-
             Route::get('/', [CommissionRateController::class, 'index'])->name('index');
-
             Route::post('/', [CommissionRateController::class, 'store'])->name('store');
-
-            Route::put('/{commissionRate}',
-                [CommissionRateController::class, 'update']
-            )->name('update');
-
-            Route::delete('/{commissionRate}',
-                [CommissionRateController::class, 'destroy']
-            )->name('destroy');
-
-            // ROUTE EXPORT CSV (Correction erreur)
-            Route::get('/export',
-                [CommissionRateController::class, 'export']
-            )->name('export');
-
+            Route::put('/{commissionRate}', [CommissionRateController::class, 'update'])->name('update');
+            Route::delete('/{commissionRate}', [CommissionRateController::class, 'destroy'])->name('destroy');
+            Route::get('/export', [CommissionRateController::class, 'export'])->name('export');
         });
 
+        // Partenaires Payeurs
+        Route::get('payments', [PaymentPartnerController::class, 'index'])->name('payments.index');
+        Route::get('payments/export', [PaymentPartnerController::class, 'export'])->name('payments.export');
+        Route::post('payments/withdrawals/{withdrawal}/approve', [PaymentPartnerController::class, 'approveWithdrawal'])->name('payments.approve-withdrawal');
+        Route::post('payments/withdrawals/{withdrawal}/reject', [PaymentPartnerController::class, 'rejectWithdrawal'])->name('payments.reject-withdrawal');
 
     });
 
