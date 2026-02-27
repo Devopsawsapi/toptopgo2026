@@ -1,11 +1,20 @@
 <?php
 
-// config/filesystems.php
-// Ajoutez 'backblaze' dans le tableau 'disks'
-
 return [
 
+    /*
+    |--------------------------------------------------------------------------
+    | Default Filesystem Disk
+    |--------------------------------------------------------------------------
+    */
+
     'default' => env('FILESYSTEM_DISK', 'local'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Filesystem Disks
+    |--------------------------------------------------------------------------
+    */
 
     'disks' => [
 
@@ -23,7 +32,7 @@ return [
             'throw'      => false,
         ],
 
-        // ✅ Backblaze B2
+        // ✅ Backblaze B2 (compatible S3)
         'backblaze' => [
             'driver'                  => 's3',
             'key'                     => env('BACKBLAZE_KEY_ID'),
@@ -31,13 +40,20 @@ return [
             'region'                  => env('BACKBLAZE_REGION', 'us-west-004'),
             'bucket'                  => env('BACKBLAZE_BUCKET'),
             'endpoint'                => env('BACKBLAZE_ENDPOINT'),
-            'url'                     => env('BACKBLAZE_ENDPOINT') . '/file/' . env('BACKBLAZE_BUCKET'),
+            // ✅ CORRIGÉ : format S3 (sans /file/) — ex: https://s3.us-west-004.backblazeb2.com/toptopgo2026
+            'url'                     => env('BACKBLAZE_ENDPOINT') . '/' . env('BACKBLAZE_BUCKET'),
             'visibility'              => 'public',
             'throw'                   => false,
             'use_path_style_endpoint' => true,
         ],
 
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Symbolic Links
+    |--------------------------------------------------------------------------
+    */
 
     'links' => [
         public_path('storage') => storage_path('app/public'),

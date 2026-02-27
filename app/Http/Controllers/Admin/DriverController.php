@@ -127,7 +127,7 @@ class DriverController extends Controller
         // ── Upload fichiers → Backblaze B2 ────────────────────────
         foreach ($this->fileFields() as $field) {
             if ($request->hasFile($field)) {
-                // Supprimer l'ancien fichier si c'est une URL Backblaze
+                // Supprimer l'ancien fichier s'il existe sur Backblaze
                 if ($driver->$field && str_contains($driver->$field, 'backblazeb2.com')) {
                     $this->deleteFromBackblaze($driver->$field);
                 }
@@ -199,7 +199,9 @@ class DriverController extends Controller
 
     /**
      * Upload un fichier vers Backblaze B2
-     * Retourne l'URL publique complète
+     * Retourne l'URL publique complète au format S3 compatible
+     *
+     * ✅ URL générée : https://s3.us-west-004.backblazeb2.com/toptopgo2026/drivers/profile_photo/uuid.jpg
      */
     private function uploadToBackblaze($file, string $folder): string
     {
@@ -208,22 +210,43 @@ class DriverController extends Controller
 
         Storage::disk('backblaze')->put($path, file_get_contents($file), 'public');
 
-        return Storage::disk('backblaze')->url($path);
+        // ✅ Construction manuelle de l'URL — plus fiable que Storage::url()
+        return rtrim(env('BACKBLAZE_ENDPOINT'), '/')
+            . '/' . env('BACKBLAZE_BUCKET')
+            . '/' . $path;
     }
 
     /**
-     * Supprimer un fichier de Backblaze via son URL
+     * Supprimer un fichier de Backblaze via son URL publique
+     *
+     * Gère les deux formats d'URL possibles :
+     *  - Format S3  : https://s3.us-west-004.backblazeb2.com/toptopgo2026/drivers/...
+     *  - Format natif B2 (ancien) : https://s3.us-west-004.backblazeb2.com/file/toptopgo2026/drivers/...
      */
     private function deleteFromBackblaze(string $url): void
     {
         try {
-            $endpoint = rtrim(env('BACKBLAZE_ENDPOINT'), '/') . '/file/' . env('BACKBLAZE_BUCKET') . '/';
-            $path     = str_replace($endpoint, '', $url);
+            $endpoint = rtrim(env('BACKBLAZE_ENDPOINT'), '/');
+            $bucket   = env('BACKBLAZE_BUCKET');
+
+            // Format S3 : endpoint/bucket/path
+            $prefixS3 = $endpoint . '/' . $bucket . '/';
+            // Format natif B2 : endpoint/file/bucket/path (ancien format stocké en base)
+            $prefixB2 = $endpoint . '/file/' . $bucket . '/';
+
+            if (str_starts_with($url, $prefixS3)) {
+                $path = substr($url, strlen($prefixS3));
+            } elseif (str_starts_with($url, $prefixB2)) {
+                $path = substr($url, strlen($prefixB2));
+            } else {
+                return; // URL non reconnue, on ne fait rien
+            }
+
             if ($path) {
                 Storage::disk('backblaze')->delete($path);
             }
         } catch (\Exception $e) {
-            // Silencieux
+            // Silencieux — ne pas bloquer l'update si la suppression échoue
         }
     }
 
@@ -236,7 +259,7 @@ class DriverController extends Controller
     }
 
     // ================================================================
-    // GEOCODAGE (inchangé)
+    // GEOCODAGE
     // ================================================================
 
     private function geocode(?string $city, ?string $country): ?array
