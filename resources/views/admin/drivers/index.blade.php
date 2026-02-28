@@ -84,8 +84,13 @@
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             @if($driver->profile_photo)
-                                <img src="{{ asset('storage/' . $driver->profile_photo) }}"
-                                     class="w-9 h-9 rounded-full object-cover border">
+                                {{-- ✅ L'accessor retourne directement l'URL complète Backblaze --}}
+                                <img src="{{ $driver->profile_photo }}"
+                                     class="w-9 h-9 rounded-full object-cover border"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="w-9 h-9 rounded-full bg-[#1DA1F2] items-center justify-center text-white font-bold text-sm hidden">
+                                    {{ strtoupper(substr($driver->first_name, 0, 1)) }}
+                                </div>
                             @else
                                 <div class="w-9 h-9 rounded-full bg-[#1DA1F2] flex items-center justify-center text-white font-bold text-sm">
                                     {{ strtoupper(substr($driver->first_name, 0, 1)) }}
