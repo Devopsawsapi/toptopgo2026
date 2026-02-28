@@ -1,19 +1,19 @@
-@extends('admin.layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 
 <div class="max-w-5xl mx-auto">
 
     <!-- HEADER -->
     <div class="flex items-center justify-between mb-8">
         <div class="flex items-center gap-4">
-            <a href="{{ route('admin.drivers.index') }}" class="text-gray-400 hover:text-gray-700 transition text-2xl">←</a>
+            <a href="<?php echo e(route('admin.drivers.index')); ?>" class="text-gray-400 hover:text-gray-700 transition text-2xl">←</a>
             <div>
                 <h1 class="text-3xl font-bold text-gray-800">👤 Profil Chauffeur</h1>
-                <p class="text-gray-500 text-sm mt-1">{{ $driver->first_name }} {{ $driver->last_name }}</p>
+                <p class="text-gray-500 text-sm mt-1"><?php echo e($driver->first_name); ?> <?php echo e($driver->last_name); ?></p>
             </div>
         </div>
-        <a href="{{ route('admin.drivers.edit', $driver->id) }}"
+        <a href="<?php echo e(route('admin.drivers.edit', $driver->id)); ?>"
            class="bg-[#1DA1F2] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#FFC107] hover:text-black transition-all duration-300">
             ✏️ Modifier
         </a>
@@ -22,51 +22,53 @@
     <!-- INFO PERSO -->
     <div class="bg-white rounded-2xl shadow-md p-8 mb-6">
         <div class="flex items-center gap-6 mb-6">
-            @if($driver->profile_photo)
-                <img src="{{ $driver->profile_photo }}"
+            <?php if($driver->profile_photo): ?>
+                <img src="<?php echo e($driver->profile_photo); ?>"
                      class="w-20 h-20 rounded-full object-cover border-4 border-[#1DA1F2]"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="w-20 h-20 rounded-full bg-[#1DA1F2] items-center justify-center text-3xl font-bold text-white hidden">
-                    {{ strtoupper(substr($driver->first_name, 0, 1)) }}
+                    <?php echo e(strtoupper(substr($driver->first_name, 0, 1))); ?>
+
                 </div>
-            @else
+            <?php else: ?>
                 <div class="w-20 h-20 rounded-full bg-[#1DA1F2] flex items-center justify-center text-3xl font-bold text-white">
-                    {{ strtoupper(substr($driver->first_name, 0, 1)) }}
+                    <?php echo e(strtoupper(substr($driver->first_name, 0, 1))); ?>
+
                 </div>
-            @endif
+            <?php endif; ?>
             <div>
-                <h2 class="text-2xl font-bold text-gray-800">{{ $driver->first_name }} {{ $driver->last_name }}</h2>
-                <p class="text-gray-500">{{ $driver->phone }}</p>
+                <h2 class="text-2xl font-bold text-gray-800"><?php echo e($driver->first_name); ?> <?php echo e($driver->last_name); ?></h2>
+                <p class="text-gray-500"><?php echo e($driver->phone); ?></p>
 
                 <div class="flex gap-2 mt-2">
 
-                    @if($driver->status == 'approved')
+                    <?php if($driver->status == 'approved'): ?>
                         <span class="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
                             ✅ Approuvé
                         </span>
-                    @elseif($driver->status == 'pending')
+                    <?php elseif($driver->status == 'pending'): ?>
                         <span class="bg-yellow-100 text-yellow-700 text-xs font-semibold px-3 py-1 rounded-full">
                             ⏳ En attente KYC
                         </span>
-                    @elseif($driver->status == 'rejected')
+                    <?php elseif($driver->status == 'rejected'): ?>
                         <span class="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">
                             ❌ Rejeté
                         </span>
-                    @else
+                    <?php else: ?>
                         <span class="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">
                             🚫 Suspendu
                         </span>
-                    @endif
+                    <?php endif; ?>
 
-                    @if($driver->driver_status == 'online')
+                    <?php if($driver->driver_status == 'online'): ?>
                         <span class="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
                             🟢 En ligne
                         </span>
-                    @else
+                    <?php else: ?>
                         <span class="bg-gray-100 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full">
                             ⚫ Hors ligne
                         </span>
-                    @endif
+                    <?php endif; ?>
 
                 </div>
 
@@ -78,42 +80,48 @@
             <div class="bg-gray-50 p-4 rounded-xl">
                 <p class="text-xs text-gray-400 uppercase mb-1">Date de naissance</p>
                 <p class="font-semibold text-gray-800">
-                    {{ $driver->birth_date ? \Carbon\Carbon::parse($driver->birth_date)->format('d/m/Y') : '—' }}
+                    <?php echo e($driver->birth_date ? \Carbon\Carbon::parse($driver->birth_date)->format('d/m/Y') : '—'); ?>
+
                 </p>
             </div>
 
             <div class="bg-gray-50 p-4 rounded-xl">
                 <p class="text-xs text-gray-400 uppercase mb-1">Lieu de naissance</p>
                 <p class="font-semibold text-gray-800">
-                    {{ $driver->birth_place ?? '—' }}
+                    <?php echo e($driver->birth_place ?? '—'); ?>
+
                 </p>
             </div>
 
             <div class="bg-gray-50 p-4 rounded-xl">
                 <p class="text-xs text-gray-400 uppercase mb-1">Pays de naissance</p>
                 <p class="font-semibold text-gray-800">
-                    {{ $driver->country_birth ?? '—' }}
+                    <?php echo e($driver->country_birth ?? '—'); ?>
+
                 </p>
             </div>
 
             <div class="bg-gray-50 p-4 rounded-xl">
                 <p class="text-xs text-gray-400 uppercase mb-1">Inscrit le</p>
                 <p class="font-semibold text-gray-800">
-                    {{ $driver->created_at->format('d/m/Y à H:i') }}
+                    <?php echo e($driver->created_at->format('d/m/Y à H:i')); ?>
+
                 </p>
             </div>
 
             <div class="bg-gray-50 p-4 rounded-xl">
                 <p class="text-xs text-gray-400 uppercase mb-1">Ville</p>
                 <p class="font-semibold text-gray-800">
-                    {{ $driver->vehicle_city ?? '—' }}
+                    <?php echo e($driver->vehicle_city ?? '—'); ?>
+
                 </p>
             </div>
 
             <div class="bg-gray-50 p-4 rounded-xl">
                 <p class="text-xs text-gray-400 uppercase mb-1">Pays</p>
                 <p class="font-semibold text-gray-800">
-                    {{ $driver->vehicle_country ?? '—' }}
+                    <?php echo e($driver->vehicle_country ?? '—'); ?>
+
                 </p>
             </div>
 
@@ -131,7 +139,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            @php
+            <?php
             $docs = [
                 ['label' => '🪪 CNI Recto','field' => 'id_card_front'],
                 ['label' => '🪪 CNI Verso','field' => 'id_card_back'],
@@ -140,61 +148,62 @@
                 ['label' => '🚗 Carte grise','field' => 'vehicle_registration'],
                 ['label' => '🛡 Assurance','field' => 'insurance'],
             ];
-            @endphp
+            ?>
 
 
-            @foreach($docs as $doc)
+            <?php $__currentLoopData = $docs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $doc): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
             <div class="border border-gray-200 rounded-xl overflow-hidden">
 
                 <div class="bg-gray-50 px-4 py-2 border-b border-gray-200">
                     <p class="text-sm font-semibold text-gray-700">
-                        {{ $doc['label'] }}
+                        <?php echo e($doc['label']); ?>
+
                     </p>
                 </div>
 
                 <div class="p-3">
 
-                    @if($driver->{$doc['field']})
+                    <?php if($driver->{$doc['field']}): ?>
 
-                        @php
+                        <?php
                         // Extraction extension fichier
                         $fileUrl = $driver->{$doc['field']};
                         $ext = strtolower(pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
-                        @endphp
+                        ?>
 
-                        @if(in_array($ext,['jpg','jpeg','png','webp']))
+                        <?php if(in_array($ext,['jpg','jpeg','png','webp'])): ?>
 
-                        <a href="{{ $fileUrl }}" target="_blank">
+                        <a href="<?php echo e($fileUrl); ?>" target="_blank">
 
-                            <img src="{{ $fileUrl }}"
+                            <img src="<?php echo e($fileUrl); ?>"
                                  class="w-full h-32 object-cover rounded-lg hover:opacity-90 transition cursor-pointer"
                                  onerror="this.parentElement.innerHTML='<div class=\'h-32 bg-red-50 rounded-lg flex items-center justify-center text-red-400 text-sm\'>Image non accessible</div>'">
 
                         </a>
 
-                        @else
+                        <?php else: ?>
 
-                        <a href="{{ $fileUrl }}" target="_blank"
+                        <a href="<?php echo e($fileUrl); ?>" target="_blank"
                            class="flex items-center gap-2 text-[#1DA1F2] hover:underline text-sm">
                            📎 Voir le fichier
                         </a>
 
-                        @endif
+                        <?php endif; ?>
 
-                    @else
+                    <?php else: ?>
 
                     <div class="h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-sm">
                         Non fourni
                     </div>
 
-                    @endif
+                    <?php endif; ?>
 
                 </div>
 
             </div>
 
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
         </div>
 
@@ -202,4 +211,5 @@
 
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('admin.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\SMART\Desktop\Nouveau dossier\Backendtoptopgo\Backendtoptopgo\resources\views/admin/drivers/show.blade.php ENDPATH**/ ?>
