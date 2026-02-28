@@ -45,8 +45,11 @@ class Driver extends Authenticatable
         // Déjà une URL complète
         if (str_starts_with($value, 'http')) return $value;
 
-        // Chemin relatif → construire l'URL Backblaze
-        return rtrim(config('filesystems.disks.backblaze.url'), '/') . '/' . ltrim($value, '/');
+        // ✅ Utilise env() directement — plus fiable que config() en production
+        $baseUrl = rtrim(env('BACKBLAZE_ENDPOINT', 'https://s3.us-west-004.backblazeb2.com'), '/')
+                 . '/' . env('BACKBLAZE_BUCKET', 'toptopgo2026');
+
+        return $baseUrl . '/' . ltrim($value, '/');
     }
 
     public function getProfilePhotoAttribute($value): ?string
