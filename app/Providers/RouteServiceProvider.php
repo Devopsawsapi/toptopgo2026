@@ -37,16 +37,6 @@ class RouteServiceProvider extends ServiceProvider
             // ---------------- ADMIN ROUTES ----------------
             Route::middleware('web')
                 ->group(base_path('routes/admin.php'));
-
-            // ---------------- SPA CATCH-ALL ----------------
-            // Redirige toutes les URLs /admin/... vers ton Blade admin
-            Route::middleware('web')
-                ->prefix('admin')
-                ->group(function () {
-                    Route::get('/{any?}', function () {
-                        return view('admin.app'); // ton fichier Blade principal
-                    })->where('any', '.*');
-                });
         });
     }
 

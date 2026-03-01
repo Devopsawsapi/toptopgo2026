@@ -46,8 +46,6 @@ $countriesVilles = [
         <!-- INFORMATIONS PERSONNELLES -->
         <div class="bg-white rounded-2xl shadow-md p-8 mb-6">
             <h2 class="text-lg font-bold text-gray-700 mb-6 pb-3 border-b border-gray-100">👤 Informations Personnelles</h2>
-
-            <!-- Photo de profil -->
             <div class="flex items-center gap-6 mb-6">
                 @if($driver->profile_photo)
                     <img src="{{ asset('storage/' . $driver->profile_photo) }}"
@@ -175,7 +173,6 @@ $countriesVilles = [
                     <input type="text" name="vehicle_color" value="{{ old('vehicle_color', $driver->vehicle_color) }}"
                            class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#1DA1F2]">
                 </div>
-                <!-- PAYS -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-600 mb-1">Pays</label>
                     <select name="vehicle_country" id="vehicle_country"
@@ -189,7 +186,6 @@ $countriesVilles = [
                         @endforeach
                     </select>
                 </div>
-                <!-- VILLE -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-600 mb-1">Ville</label>
                     <select name="vehicle_city" id="vehicle_city"
@@ -201,7 +197,6 @@ $countriesVilles = [
                             </option>
                         @endforeach
                     </select>
-                    <!-- Champ libre si Autre -->
                     <input type="text" name="vehicle_city_autre" id="vehicle_city_autre"
                            placeholder="Saisir la ville"
                            value="{{ old('vehicle_country', $driver->vehicle_country) == 'Autre' ? old('vehicle_city', $driver->vehicle_city) : '' }}"
@@ -239,135 +234,62 @@ $countriesVilles = [
                                          id="preview_{{ $doc['name'] }}"
                                          class="w-full h-28 object-cover rounded-lg mb-2 cursor-zoom-in group-hover:opacity-90 transition"
                                          onclick="openZoom('{{ asset('storage/' . $driver->{$doc['name']}) }}')">
-                                    <div class="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition">
-                                        <button type="button"
-                                                onclick="openZoom('{{ asset('storage/' . $driver->{$doc['name']}) }}')"
-                                                class="bg-black bg-opacity-60 text-white text-xs px-3 py-1 rounded-full">
-                                            🔍 Zoom
-                                        </button>
-                                        <a href="{{ asset('storage/' . $driver->{$doc['name']}) }}" download
-                                           class="bg-black bg-opacity-60 text-white text-xs px-3 py-1 rounded-full">
-                                            ⬇️ DL
-                                        </a>
+                                    <div class="absolute top-1 right-1">
+                                        <button type="button" onclick="removePreview('{{ $doc['name'] }}')"
+                                                class="bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center">×</button>
                                     </div>
                                 </div>
                             @else
-                                <div class="flex items-center gap-2 mb-2">
-                                    <a href="{{ asset('storage/' . $driver->{$doc['name']}) }}" target="_blank"
-                                       class="text-[#1DA1F2] text-sm hover:underline">📎 Voir</a>
-                                    <a href="{{ asset('storage/' . $driver->{$doc['name']}) }}" download
-                                       class="text-green-600 text-sm hover:underline">⬇️ Télécharger</a>
-                                </div>
+                                <a href="{{ asset('storage/' . $driver->{$doc['name']}) }}" target="_blank"
+                                   class="text-sm text-[#1DA1F2] font-semibold hover:underline">{{ $doc['label'] }}</a>
                             @endif
-                        @else
-                            <img id="preview_{{ $doc['name'] }}" class="w-full h-28 object-cover rounded-lg mb-2 hidden cursor-zoom-in"
-                                 onclick="openZoom(this.src)">
-                            <div class="h-28 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs mb-2"
-                                 id="placeholder_{{ $doc['name'] }}">
-                                Non fourni
-                            </div>
                         @endif
-                        <input type="file" name="{{ $doc['name'] }}" accept="image/*,application/pdf"
+                        <input type="file" name="{{ $doc['name'] }}" accept="image/*"
                                onchange="previewImage(event, 'preview_{{ $doc['name'] }}')"
-                               class="text-xs text-gray-500 w-full">
+                               class="text-sm text-gray-500 mt-1 w-full">
                     </div>
                 </div>
                 @endforeach
             </div>
         </div>
 
-        <!-- MOT DE PASSE -->
-        <div class="bg-white rounded-2xl shadow-md p-8 mb-6">
-            <h2 class="text-lg font-bold text-gray-700 mb-6 pb-3 border-b border-gray-100">🔐 Mot de passe</h2>
-            <p class="text-sm text-gray-400 mb-4">Laissez vide pour ne pas modifier le mot de passe.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-600 mb-1">Nouveau mot de passe</label>
-                    <input type="password" name="password"
-                           class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#1DA1F2]">
-                    @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-600 mb-1">Confirmer le mot de passe</label>
-                    <input type="password" name="password_confirmation"
-                           class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#1DA1F2]">
-                </div>
-            </div>
-        </div>
-
-        <!-- BOUTONS -->
-        <div class="flex gap-4 mb-10">
+        <div class="flex justify-end gap-4 mt-4">
+            <a href="{{ route('admin.drivers.index') }}"
+               class="px-6 py-2 border rounded-xl font-semibold text-gray-700 hover:bg-gray-100 transition">Annuler</a>
             <button type="submit"
-                    class="flex-1 bg-[#1DA1F2] text-white py-3 rounded-xl font-semibold hover:bg-[#FFC107] hover:text-black transition-all duration-300">
-                💾 Enregistrer les modifications
-            </button>
-            <a href="{{ route('admin.drivers.show', $driver->id) }}"
-               class="flex-1 text-center bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-300">
-                Annuler
-            </a>
+                    class="px-6 py-2 bg-[#1DA1F2] text-white rounded-xl font-semibold hover:bg-[#0d8ce0] transition">Enregistrer</button>
         </div>
-
     </form>
 </div>
 
-@push('scripts')
+<!-- SCRIPTS -->
 <script>
-const countriesVilles = {
-    "République du Congo": ["Brazzaville","Pointe-Noire","Dolisie","Nkayi","Impfondo","Ouesso","Owando","Makoua","Sibiti","Mossendjo","Kindamba","Kinkala","Madingou","Loutété","Gamboma"],
-    "Cameroun": ["Yaoundé","Douala","Garoua","Bamenda","Bafoussam","Ngaoundéré","Bertoua","Maroua","Kumba","Nkongsamba","Edéa","Kribi","Ebolowa","Limbé","Buea"],
-    "République Centrafricaine": ["Bangui","Bimbo","Berbérati","Carnot","Bambari","Bouar","Bossangoa","Bria","Kaga-Bandoro","Mbaïki"],
-    "Tchad": ["N'Djamena","Moundou","Sarh","Abéché","Kélo","Koumra","Pala","Am Timan","Bongor","Doba"],
-    "Guinée Équatoriale": ["Malabo","Bata","Ebebiyín","Aconibe","Añisoc","Luba","Evinayong","Mongomo","Mbini","Riaba"],
-    "Gabon": ["Libreville","Port-Gentil","Franceville","Oyem","Moanda","Mouila","Lambaréné","Tchibanga","Koulamoutou","Makokou","Bitam","Gamba","Ndjolé","Mitzic","Booué"],
-    "Autre": []
-};
-
-function updateVilles(pays) {
-    const villeSelect = document.getElementById('vehicle_city');
-    const villeAutre = document.getElementById('vehicle_city_autre');
-
-    villeSelect.innerHTML = '<option value="">-- Choisir une ville --</option>';
-
-    if (pays === 'Autre') {
-        villeSelect.classList.add('hidden');
-        villeAutre.classList.remove('hidden');
-        villeAutre.name = 'vehicle_city';
-    } else {
-        villeSelect.classList.remove('hidden');
-        villeAutre.classList.add('hidden');
-        villeAutre.name = 'vehicle_city_autre';
-        const villes = countriesVilles[pays] || [];
-        villes.forEach(v => {
-            const opt = document.createElement('option');
-            opt.value = v;
-            opt.textContent = v;
-            villeSelect.appendChild(opt);
-        });
+function previewImage(event, id){
+    const reader = new FileReader();
+    reader.onload = function(){
+        const output = document.getElementById(id);
+        output.src = reader.result;
+        output.classList.remove('hidden');
     }
+    reader.readAsDataURL(event.target.files[0]);
 }
 
-function openZoom(src) {
+function openZoom(src){
     document.getElementById('zoom-img').src = src;
     document.getElementById('zoom-download').href = src;
     document.getElementById('zoom-modal').classList.remove('hidden');
-    document.getElementById('zoom-modal').classList.add('flex');
-    document.body.style.overflow = 'hidden';
 }
 
-function closeZoom() {
+function closeZoom(){
     document.getElementById('zoom-modal').classList.add('hidden');
-    document.getElementById('zoom-modal').classList.remove('flex');
-    document.body.style.overflow = '';
 }
 
-document.getElementById('zoom-modal').addEventListener('click', function(e) {
-    if (e.target === this) closeZoom();
-});
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeZoom();
-});
+function removePreview(id){
+    const input = document.querySelector(`input[name=${id}]`);
+    input.value = '';
+    const img = document.getElementById('preview_' + id);
+    if(img) img.src = '';
+}
 </script>
-@endpush
 
 @endsection

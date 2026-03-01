@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\SupportMessage;
 use App\Models\Driver\Driver;
 use App\Models\Admin\AdminUser;
+use Illuminate\Support\Facades\Schema;
 
 class AdminDriverSupportController extends Controller
 {
@@ -39,7 +40,6 @@ class AdminDriverSupportController extends Controller
 
         $drivers = $query->paginate(20);
 
-        // ✅ CORRECTIF — variables manquantes ligne 18 de admin-driver.blade.php
         $totalConversations = Driver::whereHas('supportMessages')->count();
 
         $totalMessages = SupportMessage::where(function ($q) {
@@ -91,8 +91,6 @@ class AdminDriverSupportController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true, 'read_at' => now()]);
 
-        // ✅ CORRECTIF : la vue admin-driver.blade.php utilise $drivers
-        // On passe TOUTES les variables nécessaires même en mode show
         $drivers = Driver::withCount(['supportMessages as unread_count' => function ($q) {
                 $q->where('recipient_type', Driver::class)
                   ->where('is_read', false);
@@ -138,8 +136,6 @@ class AdminDriverSupportController extends Controller
 
         $driver = Driver::findOrFail($driverId);
 
-        // ✅ CORRECTIF : session('admin_id') peut être null
-        // On cherche l'admin connecté depuis la session ou le premier admin dispo
         $adminId = session('admin_id');
 
         if (!$adminId) {
@@ -161,7 +157,7 @@ class AdminDriverSupportController extends Controller
         ];
 
         // ✅ Si la table a une colonne admin_id dédiée, on la remplit aussi
-        if (\Schema::hasColumn('support_messages', 'admin_id')) {
+        if (Schema::hasColumn('support_messages', 'admin_id')) {
             $data['admin_id'] = $adminId;
         }
 
