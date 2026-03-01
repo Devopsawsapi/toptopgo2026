@@ -12,6 +12,7 @@ return [
 
     'allowed_methods' => ['*'],
 
+    // ✅ Autorise TOUT — mobile (APK/iOS), Flutter Web, Railway, Postman
     'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
@@ -22,6 +23,8 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true,
+    // ✅ DOIT être false quand allowed_origins = ['*']
+    // Si true + '*' → erreur CORS navigateur
+    'supports_credentials' => false,
 
 ];

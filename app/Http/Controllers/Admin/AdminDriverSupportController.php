@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SupportMessage;
 use App\Models\Driver\Driver;
+use App\Models\Admin\AdminUser;
 
 class AdminDriverSupportController extends Controller
 {
@@ -15,7 +16,8 @@ class AdminDriverSupportController extends Controller
     public function index(Request $request)
     {
         $query = Driver::withCount(['supportMessages as unread_count' => function ($q) {
-                $q->where('is_read', false);
+                $q->where('recipient_type', Driver::class)
+                  ->where('is_read', false);
             }])
             ->with(['supportMessages' => function ($q) {
                 $q->latest()->limit(1);
@@ -30,20 +32,33 @@ class AdminDriverSupportController extends Controller
             });
         }
 
-        // Ceux avec messages en premier
-        $query->orderByRaw('(SELECT COUNT(*) FROM support_messages WHERE recipient_type = ? AND recipient_id = drivers.id) DESC', [
-            \App\Models\Driver\Driver::class
-        ])->orderBy('first_name');
+        $query->orderByRaw(
+            '(SELECT COUNT(*) FROM support_messages WHERE recipient_type = ? AND recipient_id = drivers.id) DESC',
+            [Driver::class]
+        )->orderBy('first_name');
 
         $drivers = $query->paginate(20);
 
+        // ✅ CORRECTIF — variables manquantes ligne 18 de admin-driver.blade.php
         $totalConversations = Driver::whereHas('supportMessages')->count();
-        $totalMessages      = SupportMessage::where('recipient_type', \App\Models\Driver\Driver::class)->count();
-        $unreadMessages     = SupportMessage::where('recipient_type', \App\Models\Driver\Driver::class)
-                                ->where('is_read', false)->count();
+
+        $totalMessages = SupportMessage::where(function ($q) {
+            $q->where('sender_type', Driver::class)
+              ->where('recipient_type', AdminUser::class);
+        })->orWhere(function ($q) {
+            $q->where('sender_type', AdminUser::class)
+              ->where('recipient_type', Driver::class);
+        })->count();
+
+        $unreadMessages = SupportMessage::where('recipient_type', AdminUser::class)
+            ->where('is_read', false)
+            ->count();
 
         return view('admin.messages.admin-driver', compact(
-            'drivers', 'totalConversations', 'totalMessages', 'unreadMessages'
+            'drivers',
+            'totalConversations',
+            'totalMessages',
+            'unreadMessages'
         ));
     }
 
@@ -54,49 +69,44 @@ class AdminDriverSupportController extends Controller
     {
         $driver = Driver::findOrFail($driverId);
 
-        $messages = SupportMessage::where('recipient_type', \App\Models\Driver\Driver::class)
-            ->where('recipient_id', $driverId)
-            ->with('admin')
+        $messages = SupportMessage::where(function ($q) use ($driverId) {
+                $q->where('recipient_type', Driver::class)
+                  ->where('recipient_id', $driverId)
+                  ->where('sender_type', AdminUser::class);
+            })->orWhere(function ($q) use ($driverId) {
+                $q->where('sender_type', Driver::class)
+                  ->where('sender_id', $driverId)
+                  ->where('recipient_type', AdminUser::class);
+            })
+            ->with('sender', 'recipient')
             ->oldest()
             ->get();
 
-        // Marquer comme lus
-        SupportMessage::where('recipient_type', \App\Models\Driver\Driver::class)
-            ->where('recipient_id', $driverId)
+        // Marquer comme lus les messages reçus par l'admin depuis ce chauffeur
+        $adminId = session('admin_id');
+        SupportMessage::where('recipient_type', AdminUser::class)
+            ->where('recipient_id', $adminId)
+            ->where('sender_type', Driver::class)
+            ->where('sender_id', $driverId)
             ->where('is_read', false)
             ->update(['is_read' => true, 'read_at' => now()]);
 
-        // Sidebar : tous les chauffeurs
-        $query = Driver::withCount(['supportMessages as unread_count' => function ($q) {
-                $q->where('is_read', false);
-            }])
-            ->with(['supportMessages' => function ($q) {
-                $q->latest()->limit(1);
-            }]);
+        // ✅ Variables requises par le layout même sur la vue show
+        $totalConversations = 1;
+        $totalMessages      = $messages->count();
+        $unreadMessages     = 0;
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%$search%")
-                  ->orWhere('last_name',  'like', "%$search%")
-                  ->orWhere('phone',      'like', "%$search%");
-            });
-        }
+        // ✅ Vue dédiée si elle existe, sinon fallback
+        $view = view()->exists('admin.messages.admin-driver-show')
+            ? 'admin.messages.admin-driver-show'
+            : 'admin.messages.admin-driver';
 
-        $query->orderByRaw('(SELECT COUNT(*) FROM support_messages WHERE recipient_type = ? AND recipient_id = drivers.id) DESC', [
-            \App\Models\Driver\Driver::class
-        ])->orderBy('first_name');
-
-        $drivers = $query->paginate(20);
-
-        $totalConversations = Driver::whereHas('supportMessages')->count();
-        $totalMessages      = SupportMessage::where('recipient_type', \App\Models\Driver\Driver::class)->count();
-        $unreadMessages     = SupportMessage::where('recipient_type', \App\Models\Driver\Driver::class)
-                                ->where('is_read', false)->count();
-
-        return view('admin.messages.admin-driver', compact(
-            'driver', 'drivers', 'messages',
-            'totalConversations', 'totalMessages', 'unreadMessages'
+        return view($view, compact(
+            'driver',
+            'messages',
+            'totalConversations',
+            'totalMessages',
+            'unreadMessages'
         ));
     }
 
@@ -112,16 +122,15 @@ class AdminDriverSupportController extends Controller
         $driver = Driver::findOrFail($driverId);
 
         SupportMessage::create([
-            'admin_id'       => session('admin_id'),
-            'recipient_type' => \App\Models\Driver\Driver::class,
+            'sender_type'    => AdminUser::class,
+            'sender_id'      => session('admin_id'),
+            'recipient_type' => Driver::class,
             'recipient_id'   => $driverId,
             'content'        => $request->content,
             'is_read'        => false,
         ]);
 
-        return redirect()->route('admin.support.drivers.show', array_filter([
-            'driver' => $driverId,
-            'search' => $request->search,
-        ]))->with('success', 'Message envoyé à ' . $driver->first_name . ' !');
+        return redirect()->route('admin.support.drivers.show', $driverId)
+                         ->with('success', 'Message envoyé à ' . $driver->first_name . ' !');
     }
 }
