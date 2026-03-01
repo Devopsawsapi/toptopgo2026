@@ -91,18 +91,35 @@ class AdminDriverSupportController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true, 'read_at' => now()]);
 
-        // ✅ Variables requises par le layout même sur la vue show
-        $totalConversations = 1;
-        $totalMessages      = $messages->count();
-        $unreadMessages     = 0;
+        // ✅ CORRECTIF : la vue admin-driver.blade.php utilise $drivers
+        // On passe TOUTES les variables nécessaires même en mode show
+        $drivers = Driver::withCount(['supportMessages as unread_count' => function ($q) {
+                $q->where('recipient_type', Driver::class)
+                  ->where('is_read', false);
+            }])
+            ->with(['supportMessages' => function ($q) {
+                $q->latest()->limit(1);
+            }])
+            ->orderBy('first_name')
+            ->paginate(20);
 
-        // ✅ Vue dédiée si elle existe, sinon fallback
-        $view = view()->exists('admin.messages.admin-driver-show')
-            ? 'admin.messages.admin-driver-show'
-            : 'admin.messages.admin-driver';
+        $totalConversations = Driver::whereHas('supportMessages')->count();
 
-        return view($view, compact(
+        $totalMessages = SupportMessage::where(function ($q) {
+            $q->where('sender_type', Driver::class)
+              ->where('recipient_type', AdminUser::class);
+        })->orWhere(function ($q) {
+            $q->where('sender_type', AdminUser::class)
+              ->where('recipient_type', Driver::class);
+        })->count();
+
+        $unreadMessages = SupportMessage::where('recipient_type', AdminUser::class)
+            ->where('is_read', false)
+            ->count();
+
+        return view('admin.messages.admin-driver', compact(
             'driver',
+            'drivers',
             'messages',
             'totalConversations',
             'totalMessages',
