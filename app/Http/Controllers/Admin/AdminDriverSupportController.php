@@ -138,14 +138,34 @@ class AdminDriverSupportController extends Controller
 
         $driver = Driver::findOrFail($driverId);
 
-        SupportMessage::create([
+        // ✅ CORRECTIF : session('admin_id') peut être null
+        // On cherche l'admin connecté depuis la session ou le premier admin dispo
+        $adminId = session('admin_id');
+
+        if (!$adminId) {
+            $admin = AdminUser::first();
+            $adminId = $admin?->id;
+        }
+
+        if (!$adminId) {
+            return back()->withErrors(['error' => 'Admin introuvable, reconnectez-vous.']);
+        }
+
+        $data = [
             'sender_type'    => AdminUser::class,
-            'sender_id'      => session('admin_id'),
+            'sender_id'      => $adminId,
             'recipient_type' => Driver::class,
             'recipient_id'   => $driverId,
             'content'        => $request->content,
             'is_read'        => false,
-        ]);
+        ];
+
+        // ✅ Si la table a une colonne admin_id dédiée, on la remplit aussi
+        if (\Schema::hasColumn('support_messages', 'admin_id')) {
+            $data['admin_id'] = $adminId;
+        }
+
+        SupportMessage::create($data);
 
         return redirect()->route('admin.support.drivers.show', $driverId)
                          ->with('success', 'Message envoyé à ' . $driver->first_name . ' !');
