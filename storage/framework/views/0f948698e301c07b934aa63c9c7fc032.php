@@ -9,6 +9,12 @@
             <h1 class="text-2xl font-bold text-gray-800">🛡 Support Admin ↔ Chauffeurs</h1>
             <p class="text-sm text-gray-500 mt-1">Écrivez à n'importe quel chauffeur depuis cette interface</p>
         </div>
+        <?php if(session('success')): ?>
+            <div class="bg-green-100 text-green-700 px-4 py-2 rounded-lg text-sm font-medium">
+                ✅ <?php echo e(session('success')); ?>
+
+            </div>
+        <?php endif; ?>
     </div>
 
     
@@ -23,7 +29,7 @@
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             <div class="text-sm text-gray-500 mb-1">Non lus</div>
-            <div class="text-3xl font-bold text-orange-500"><?php echo e($unreadMessages); ?></div>
+            <div class="text-3xl font-bold text-orange-500 unread-badge"><?php echo e($unreadMessages); ?></div>
         </div>
     </div>
 
@@ -62,7 +68,7 @@
                 <p class="text-xs text-gray-400 mt-0.5">Cliquez sur un chauffeur pour lui écrire</p>
             </div>
 
-            <div class="overflow-y-auto flex-1">
+            <div class="overflow-y-auto flex-1" id="driversList">
                 <?php $__empty_1 = true; $__currentLoopData = $drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $d): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                     <?php
                         $isActive = isset($driver) && $driver->id === $d->id;
@@ -72,8 +78,9 @@
                     ?>
 
                     <a href="<?php echo e(route('admin.support.drivers.show', array_merge(['driver' => $d->id], $params))); ?>"
-                        class="block p-4 border-b border-gray-50 hover:bg-blue-50 transition
-                               <?php echo e($isActive ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''); ?>">
+                        class="driver-item block p-4 border-b border-gray-50 hover:bg-blue-50 transition
+                               <?php echo e($isActive ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''); ?>"
+                        data-driver-id="<?php echo e($d->id); ?>">
 
                         <div class="flex items-center gap-3">
                             <div class="relative flex-shrink-0">
@@ -99,7 +106,8 @@
 
                                     </span>
                                     <?php if($d->unread_count > 0): ?>
-                                        <span class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0">
+                                        <span class="driver-unread-badge bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0"
+                                              data-driver-id="<?php echo e($d->id); ?>">
                                             <?php echo e($d->unread_count); ?>
 
                                         </span>
@@ -116,7 +124,7 @@
                                 </div>
 
                                 <?php if($lastMsg): ?>
-                                    <div class="text-xs text-gray-500 mt-0.5 truncate">
+                                    <div class="text-xs text-gray-500 mt-0.5 truncate driver-last-msg" data-driver-id="<?php echo e($d->id); ?>">
                                         <?php echo e(\Illuminate\Support\Str::limit($lastMsg->content, 38)); ?>
 
                                     </div>
@@ -125,7 +133,7 @@
 
                                     </div>
                                 <?php else: ?>
-                                    <div class="text-xs text-gray-300 mt-0.5 italic">
+                                    <div class="text-xs text-gray-300 mt-0.5 italic driver-last-msg" data-driver-id="<?php echo e($d->id); ?>">
                                         Aucun message — cliquez pour écrire
                                     </div>
                                 <?php endif; ?>
@@ -177,7 +185,7 @@
                                     • <?php echo e($driver->vehicle_brand); ?> <?php echo e($driver->vehicle_model); ?>
 
                                 <?php endif; ?>
-                                • <?php echo e($messages->count()); ?> message(s)
+                                • <span id="msgCount"><?php echo e($messages->count()); ?></span> message(s)
                             </div>
                         </div>
                     </div>
@@ -201,13 +209,11 @@
                 <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50" id="messagesBox">
                     <?php $__empty_1 = true; $__currentLoopData = $messages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $message): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <?php
-                            // ✅ Vérification : message envoyé par l'admin ou par le chauffeur
                             $isFromAdmin = $message->sender_type === \App\Models\Admin\AdminUser::class
                                        || $message->sender_type === 'App\Models\Admin\AdminUser';
                         ?>
 
                         <?php if($isFromAdmin): ?>
-                            
                             <div class="flex justify-end items-end gap-2">
                                 <div class="max-w-xs lg:max-w-md">
                                     <div class="text-xs text-gray-400 mb-1 text-right">
@@ -233,9 +239,7 @@
 
                                 </div>
                             </div>
-
                         <?php else: ?>
-                            
                             <div class="flex justify-start items-end gap-2">
                                 <div class="w-8 h-8 rounded-full bg-green-200 text-green-800 flex items-center justify-center text-xs font-bold flex-shrink-0">
                                     <?php echo e(strtoupper(substr($driver->first_name ?? 'D', 0, 1))); ?>
@@ -260,7 +264,6 @@
                                 </div>
                             </div>
                         <?php endif; ?>
-
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <div class="text-center text-gray-400 py-10">
                             <div class="text-4xl mb-3">✉️</div>
@@ -313,13 +316,130 @@
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('scripts'); ?>
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
-    const box = document.getElementById('messagesBox');
-    if (box) box.scrollTop = box.scrollHeight;
+// Scroll automatique en bas
+const box = document.getElementById('messagesBox');
+if (box) box.scrollTop = box.scrollHeight;
 
-    <?php if(isset($driver)): ?>
-    setInterval(() => location.reload(), 10000);
-    <?php endif; ?>
+// Demander permission notifications navigateur
+if (Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
+// Son de notification (bip simple sans fichier externe)
+function playSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(880, ctx.currentTime);
+        g.gain.setValueAtTime(0.3, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        o.start(ctx.currentTime);
+        o.stop(ctx.currentTime + 0.5);
+    } catch(e) {}
+}
+
+<?php if(isset($driver)): ?>
+// Connexion Pusher
+const pusher = new Pusher('<?php echo e(env("PUSHER_APP_KEY")); ?>', {
+    cluster: '<?php echo e(env("PUSHER_APP_CLUSTER", "eu")); ?>',
+    forceTLS: true
+});
+
+const channel = pusher.subscribe('admin-support');
+
+channel.bind('message.received', function(data) {
+    // On vérifie que le message vient bien du chauffeur actuellement affiché
+    if (parseInt(data.sender_id) !== <?php echo e($driver->id); ?>) {
+        // Message d'un autre chauffeur : mettre à jour son badge dans la sidebar
+        const badge = document.querySelector('.driver-unread-badge[data-driver-id="' + data.sender_id + '"]');
+        if (badge) {
+            badge.textContent = parseInt(badge.textContent || 0) + 1;
+        } else {
+            // Créer le badge s'il n'existe pas
+            const driverItem = document.querySelector('.driver-item[data-driver-id="' + data.sender_id + '"]');
+            if (driverItem) {
+                const nameSpan = driverItem.querySelector('.text-sm.font-semibold');
+                if (nameSpan) {
+                    const newBadge = document.createElement('span');
+                    newBadge.className = 'driver-unread-badge bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0';
+                    newBadge.setAttribute('data-driver-id', data.sender_id);
+                    newBadge.textContent = '1';
+                    nameSpan.parentNode.appendChild(newBadge);
+                }
+            }
+        }
+        // Mettre à jour l'aperçu du dernier message dans la sidebar
+        const lastMsgEl = document.querySelector('.driver-last-msg[data-driver-id="' + data.sender_id + '"]');
+        if (lastMsgEl) {
+            lastMsgEl.textContent = data.content.substring(0, 38);
+        }
+        // Jouer le son même si c'est un autre chauffeur
+        playSound();
+        return;
+    }
+
+    // Message du chauffeur affiché : ajouter dans la zone de chat
+    const messagesBox = document.getElementById('messagesBox');
+    if (messagesBox) {
+        const driverInitial = '<?php echo e(strtoupper(substr($driver->first_name ?? "D", 0, 1))); ?>';
+        const driverName = '<?php echo e($driver->first_name); ?> <?php echo e($driver->last_name); ?>';
+
+        const div = document.createElement('div');
+        div.className = 'flex justify-start items-end gap-2 new-msg';
+        div.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-green-200 text-green-800 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                ${driverInitial}
+            </div>
+            <div class="max-w-xs lg:max-w-md">
+                <div class="text-xs text-gray-400 mb-1 text-left">🚗 ${driverName}</div>
+                <div class="px-4 py-2.5 rounded-2xl rounded-tl-none text-sm leading-relaxed bg-white text-gray-800 shadow-sm border border-gray-200">
+                    ${data.content}
+                </div>
+                <div class="text-xs text-gray-400 mt-1 text-left">${data.created_at}</div>
+            </div>`;
+
+        messagesBox.appendChild(div);
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+
+        // Mettre à jour le compteur de messages
+        const msgCount = document.getElementById('msgCount');
+        if (msgCount) msgCount.textContent = parseInt(msgCount.textContent) + 1;
+    }
+
+    // Mettre à jour le badge "Non lus" global
+    const globalBadge = document.querySelector('.unread-badge');
+    if (globalBadge) {
+        globalBadge.textContent = parseInt(globalBadge.textContent || 0) + 1;
+    }
+
+    // Son
+    playSound();
+
+    // Notification navigateur
+    if (Notification.permission === 'granted') {
+        new Notification('🚖 Nouveau message de <?php echo e($driver->first_name); ?>', {
+            body: data.content,
+            icon: '/favicon.ico'
+        });
+    }
+});
+<?php endif; ?>
 </script>
+
+<style>
+.new-msg {
+    animation: fadeUp 0.3s ease;
+}
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+</style>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('admin.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\SMART\Desktop\Nouveau dossier\Backendtoptopgo\Backendtoptopgo\resources\views/admin/messages/admin-driver.blade.php ENDPATH**/ ?>

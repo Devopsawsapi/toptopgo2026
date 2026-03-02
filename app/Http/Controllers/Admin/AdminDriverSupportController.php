@@ -8,6 +8,7 @@ use App\Models\SupportMessage;
 use App\Models\Driver\Driver;
 use App\Models\Admin\AdminUser;
 use Illuminate\Support\Facades\Schema;
+use App\Events\SupportMessageSent;
 
 class AdminDriverSupportController extends Controller
 {
@@ -156,12 +157,14 @@ class AdminDriverSupportController extends Controller
             'is_read'        => false,
         ];
 
-        // ✅ Si la table a une colonne admin_id dédiée, on la remplit aussi
         if (Schema::hasColumn('support_messages', 'admin_id')) {
             $data['admin_id'] = $adminId;
         }
 
-        SupportMessage::create($data);
+        $message = SupportMessage::create($data);
+
+        // 🔥 Broadcaster en temps réel via Pusher
+        broadcast(new SupportMessageSent($message))->toOthers();
 
         return redirect()->route('admin.support.drivers.show', $driverId)
                          ->with('success', 'Message envoyé à ' . $driver->first_name . ' !');
