@@ -2,26 +2,7 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Default Broadcaster
-    |--------------------------------------------------------------------------
-    |
-    | The default broadcaster used when an event needs to be broadcast.
-    | If PUSHER_APP_KEY is not set, we fall back to 'log' to prevent errors.
-    |
-    */
-
     'default' => env('BROADCAST_DRIVER', env('PUSHER_APP_KEY') ? 'pusher' : 'log'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Broadcast Connections
-    |--------------------------------------------------------------------------
-    |
-    | Define all broadcast connections here.
-    |
-    */
 
     'connections' => [
 
@@ -35,7 +16,7 @@ return [
                 'useTLS' => true,
             ],
             'client_options' => [
-                // Optional Guzzle client options
+                'verify' => false, // ← Désactive la vérif SSL en local
             ],
         ],
 

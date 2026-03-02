@@ -1,7 +1,7 @@
 {
     "name": "toptopgo/backend",
     "type": "project",
-    "description": "TopTopGo - Application de covoiturage pour le Congo",
+    "description": "TopTopGo - Application de covoiturage pour le Congo et afrique centrale",
     "keywords": ["laravel", "covoiturage", "ridesharing", "peex", "mobile-money"],
     "license": "proprietary",
     "require": {
