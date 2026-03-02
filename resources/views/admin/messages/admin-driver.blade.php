@@ -75,7 +75,6 @@
                                {{ $isActive ? 'bg-blue-50 border-l-4 border-l-blue-500' : '' }}">
 
                         <div class="flex items-center gap-3">
-                            {{-- Avatar --}}
                             <div class="relative flex-shrink-0">
                                 @if($d->profile_photo)
                                     <img src="{{ asset('storage/' . $d->profile_photo) }}"
@@ -86,7 +85,6 @@
                                         {{ strtoupper(substr($d->first_name ?? 'D', 0, 1)) }}
                                     </div>
                                 @endif
-                                {{-- Point vert si conversation active --}}
                                 @if($hasMsg)
                                     <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></span>
                                 @endif
@@ -187,27 +185,59 @@
                 {{-- Liste messages --}}
                 <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50" id="messagesBox">
                     @forelse($messages as $message)
-                        <div class="flex justify-end items-end gap-2">
-                            <div class="max-w-xs lg:max-w-md">
-                                <div class="text-xs text-gray-400 mb-1 text-right">
-                                    🛡 {{ $message->admin->name ?? session('admin_name', 'Admin') }}
+                        @php
+                            // ✅ Vérification : message envoyé par l'admin ou par le chauffeur
+                            $isFromAdmin = $message->sender_type === \App\Models\Admin\AdminUser::class
+                                       || $message->sender_type === 'App\Models\Admin\AdminUser';
+                        @endphp
+
+                        @if($isFromAdmin)
+                            {{-- MESSAGE ADMIN → droite, bleu --}}
+                            <div class="flex justify-end items-end gap-2">
+                                <div class="max-w-xs lg:max-w-md">
+                                    <div class="text-xs text-gray-400 mb-1 text-right">
+                                        🛡 {{ session('admin_name', 'Admin') }}
+                                    </div>
+                                    <div class="px-4 py-2.5 rounded-2xl rounded-tr-none text-sm leading-relaxed bg-blue-600 text-white shadow-sm">
+                                        {{ $message->content }}
+                                    </div>
+                                    <div class="text-xs text-gray-400 mt-1 text-right">
+                                        {{ $message->created_at->format('d/m H:i') }}
+                                        @if($message->is_read)
+                                            <span class="text-blue-400 ml-1">✓✓ Lu</span>
+                                        @else
+                                            <span class="text-gray-300 ml-1">✓ Envoyé</span>
+                                        @endif
+                                    </div>
                                 </div>
-                                <div class="px-4 py-2.5 rounded-2xl rounded-tr-none text-sm leading-relaxed bg-blue-600 text-white shadow-sm">
-                                    {{ $message->content }}
-                                </div>
-                                <div class="text-xs text-gray-400 mt-1 text-right">
-                                    {{ $message->created_at->format('d/m H:i') }}
-                                    @if($message->is_read)
-                                        <span class="text-blue-400 ml-1">✓✓ Lu</span>
-                                    @else
-                                        <span class="text-gray-300 ml-1">✓ Envoyé</span>
-                                    @endif
+                                <div class="w-8 h-8 rounded-full bg-yellow-400 text-black flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                    {{ strtoupper(substr(session('admin_name', 'A'), 0, 1)) }}
                                 </div>
                             </div>
-                            <div class="w-8 h-8 rounded-full bg-yellow-400 text-black flex items-center justify-center text-xs font-bold flex-shrink-0">
-                                {{ strtoupper(substr(session('admin_name', 'A'), 0, 1)) }}
+
+                        @else
+                            {{-- MESSAGE CHAUFFEUR → gauche, gris --}}
+                            <div class="flex justify-start items-end gap-2">
+                                <div class="w-8 h-8 rounded-full bg-green-200 text-green-800 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                    {{ strtoupper(substr($driver->first_name ?? 'D', 0, 1)) }}
+                                </div>
+                                <div class="max-w-xs lg:max-w-md">
+                                    <div class="text-xs text-gray-400 mb-1 text-left">
+                                        🚗 {{ $driver->first_name }} {{ $driver->last_name }}
+                                    </div>
+                                    <div class="px-4 py-2.5 rounded-2xl rounded-tl-none text-sm leading-relaxed bg-white text-gray-800 shadow-sm border border-gray-200">
+                                        {{ $message->content }}
+                                    </div>
+                                    <div class="text-xs text-gray-400 mt-1 text-left">
+                                        {{ $message->created_at->format('d/m H:i') }}
+                                        @if($message->is_read)
+                                            <span class="text-green-400 ml-1">✓✓ Lu</span>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        @endif
+
                     @empty
                         <div class="text-center text-gray-400 py-10">
                             <div class="text-4xl mb-3">✉️</div>
