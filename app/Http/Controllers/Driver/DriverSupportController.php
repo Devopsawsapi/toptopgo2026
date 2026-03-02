@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\SupportMessage;
 use App\Models\Driver\Driver;
 use App\Models\Admin\AdminUser;
+use App\Events\SupportMessageSent;
 
 class DriverSupportController extends Controller
 {
@@ -15,7 +16,7 @@ class DriverSupportController extends Controller
      */
     public function index(Request $request)
     {
-        $driverId = auth()->id(); // récupère le chauffeur connecté
+        $driverId = auth()->id();
 
         $messages = SupportMessage::where(function ($q) use ($driverId) {
                 $q->where('recipient_type', Driver::class)
@@ -54,7 +55,6 @@ class DriverSupportController extends Controller
 
         $driverId = auth()->id();
 
-        // Pour simplifier, on envoie au premier admin disponible
         $admin = AdminUser::firstOrFail();
 
         $message = SupportMessage::create([
@@ -65,6 +65,9 @@ class DriverSupportController extends Controller
             'content'        => $request->content,
             'is_read'        => false,
         ]);
+
+        // 🔥 Broadcaster en temps réel à l'admin via Pusher
+        broadcast(new SupportMessageSent($message));
 
         return response()->json([
             'status' => 'success',
