@@ -21273,3 +21273,29 @@ DST Off\">2026-02-28 23:59:59.999999 Africa/Brazzaville (+01:00)</span>
 #20 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/artisan(24): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
 #21 {main}
 "} 
+[2026-03-03 21:38:22] production.ERROR: Command "migate" is not defined.
+
+Did you mean one of these?
+    migrate
+    migrate:fresh
+    migrate:install
+    migrate:refresh
+    migrate:reset
+    migrate:rollback
+    migrate:status {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"migate\" is not defined.
+
+Did you mean one of these?
+    migrate
+    migrate:fresh
+    migrate:install
+    migrate:refresh
+    migrate:reset
+    migrate:rollback
+    migrate:status at C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/symfony/console/Application.php:759)
+[stacktrace]
+#0 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/symfony/console/Application.php(298): Symfony/Component/Console/Application->find('migate')
+#1 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#2 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#3 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/artisan(24): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#4 {main}
+"} 
