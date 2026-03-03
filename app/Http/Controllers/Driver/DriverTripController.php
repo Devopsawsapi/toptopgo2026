@@ -27,27 +27,34 @@ class DriverTripController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'pickup_address'    => 'required|string',
-            'dropoff_address'   => 'required|string',
-            'pickup_latitude'   => 'required|numeric',
-            'pickup_longitude'  => 'required|numeric',
-            'dropoff_latitude'  => 'required|numeric',
-            'dropoff_longitude' => 'required|numeric',
+            'departure'         => 'required|string',
+            'destination'       => 'required|string',
+            'price_per_seat'    => 'required|numeric',
+            'available_seats'   => 'required|integer',
+            'departure_date'    => 'required|date',
+            'departure_time'    => 'required|string',
+            'luggage_included'  => 'nullable|integer',
+            'extra_luggage_fee' => 'nullable|numeric',
+            'vehicle_type'      => 'nullable|string',
         ]);
 
         $trip = Trip::create([
             'driver_id'         => $request->user()->id,
-            'pickup_address'    => $request->pickup_address,
-            'dropoff_address'   => $request->dropoff_address,
-            'pickup_latitude'   => $request->pickup_latitude,
-            'pickup_longitude'  => $request->pickup_longitude,
-            'dropoff_latitude'  => $request->dropoff_latitude,
-            'dropoff_longitude' => $request->dropoff_longitude,
+            'pickup_address'    => $request->departure,
+            'dropoff_address'   => $request->destination,
+            'price_per_seat'    => $request->price_per_seat,
+            'available_seats'   => $request->available_seats,
+            'departure_date'    => $request->departure_date,
+            'departure_time'    => $request->departure_time,
+            'luggage_included'  => $request->luggage_included ?? 1,
+            'extra_luggage_fee' => $request->extra_luggage_fee ?? 0,
+            'vehicle_type'      => $request->vehicle_type,
             'status'            => 'pending',
         ]);
 
         return response()->json([
-            'message' => 'Trajet créé avec succès.',
+            'success' => true,
+            'message' => 'Trajet publié avec succès.',
             'trip'    => new TripResource($trip),
         ], 201);
     }

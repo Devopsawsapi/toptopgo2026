@@ -117,7 +117,7 @@
         <div class="divide-y divide-gray-50">
             @forelse($alerts as $alert)
                 @php
-                    $isDriver = str_contains($alert->sender_type, 'Driver');
+                    $isDriver   = str_contains($alert->sender_type, 'Driver');
                     $senderName = ($alert->sender->first_name ?? '—') . ' ' . ($alert->sender->last_name ?? '');
                 @endphp
 
@@ -126,7 +126,6 @@
 
                         {{-- Infos alerte --}}
                         <div class="flex items-start gap-4 flex-1">
-                            {{-- Avatar --}}
                             <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0
                                 {{ $isDriver ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700' }}">
                                 {{ $isDriver ? '🚗' : '👤' }}
@@ -150,17 +149,23 @@
                                 @endif
 
                                 <div class="flex items-center gap-4 mt-2 text-xs text-gray-400 flex-wrap">
+                                    {{-- ✅ created_at est toujours un Carbon --}}
                                     <span>🕐 {{ $alert->created_at->format('d/m/Y H:i') }}
                                         ({{ $alert->created_at->diffForHumans() }})</span>
+
                                     @if($alert->trip_id)
                                         <span>🚕 Course #{{ $alert->trip_id }}</span>
                                     @endif
+
                                     @if($alert->lat && $alert->lng)
                                         <span>📍 {{ number_format($alert->lat, 4) }}, {{ number_format($alert->lng, 4) }}</span>
                                     @endif
+
+                                    {{-- ✅ CORRIGÉ : Carbon::parse pour éviter format() on string --}}
                                     @if($alert->status === 'treated' && $alert->treatedBy)
                                         <span>✅ Traité par {{ $alert->treatedBy->name ?? '—' }}
-                                            le {{ $alert->treated_at?->format('d/m/Y H:i') }}</span>
+                                            le {{ $alert->treated_at ? \Carbon\Carbon::parse($alert->treated_at)->format('d/m/Y H:i') : '—' }}
+                                        </span>
                                     @endif
                                 </div>
                             </div>
@@ -220,7 +225,6 @@
 
 @push('scripts')
 <script>
-// ── Carte SOS ─────────────────────────────────────────────────
 const sosMap = L.map('sosMap').setView([2.0, 15.0], 4);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap', maxZoom: 19
@@ -245,12 +249,9 @@ function updateSosMap(alerts) {
     alerts.forEach(a => {
         if (!a.lat || !a.lng) return;
         seen.add(a.id);
-
         const popup = `
             <div style="min-width:180px; font-family:sans-serif;">
-                <div style="font-weight:bold; color:#ef4444; font-size:14px; margin-bottom:6px;">
-                    🆘 Alerte SOS
-                </div>
+                <div style="font-weight:bold; color:#ef4444; font-size:14px; margin-bottom:6px;">🆘 Alerte SOS</div>
                 <div style="font-size:12px; color:#555; line-height:1.8;">
                     ${a.sender_type === 'driver' ? '🚗' : '👤'} <b>${a.sender_name}</b><br>
                     ${a.message ? '💬 ' + a.message + '<br>' : ''}
@@ -263,18 +264,14 @@ function updateSosMap(alerts) {
                     Voir le détail →
                 </a>
             </div>`;
-
         if (sosMarkers[a.id]) {
             sosMarkers[a.id].setPopupContent(popup);
         } else {
             sosMarkers[a.id] = L.marker([a.lat, a.lng], { icon: makeSosIcon(a.sender_type) })
-                .addTo(sosMap)
-                .bindPopup(popup)
-                .openPopup();
+                .addTo(sosMap).bindPopup(popup).openPopup();
         }
     });
 
-    // Supprimer marqueurs traités
     Object.keys(sosMarkers).forEach(id => {
         if (!seen.has(parseInt(id))) {
             sosMap.removeLayer(sosMarkers[id]);
@@ -282,24 +279,18 @@ function updateSosMap(alerts) {
         }
     });
 
-    // Ajuster vue si alertes
     if (alerts.length > 0) {
         const coords = alerts.filter(a => a.lat && a.lng).map(a => [a.lat, a.lng]);
-        if (coords.length === 1) {
-            sosMap.setView(coords[0], 14);
-        } else if (coords.length > 1) {
-            sosMap.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
-        }
+        if (coords.length === 1) sosMap.setView(coords[0], 14);
+        else if (coords.length > 1) sosMap.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
     }
 }
 
 function zoomSos(lat, lng) {
-    sosMap.scrollIntoView ? sosMap.getContainer().scrollIntoView({ behavior: 'smooth' }) : null;
     document.getElementById('sosMap').scrollIntoView({ behavior: 'smooth' });
     setTimeout(() => sosMap.setView([lat, lng], 16), 400);
 }
 
-// Fetch alertes actives
 function fetchSosAlerts() {
     fetch("{{ route('admin.sos.live') }}", {
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
@@ -312,7 +303,6 @@ function fetchSosAlerts() {
 fetchSosAlerts();
 setInterval(fetchSosAlerts, 10000);
 
-// Son d'alerte si nouvelles alertes actives
 @if($totalActive > 0)
     document.title = '🆘 {{ $totalActive }} SOS - TopTopGo Admin';
 @endif
