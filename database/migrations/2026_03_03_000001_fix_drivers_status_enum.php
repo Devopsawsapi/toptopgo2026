@@ -13,17 +13,18 @@ return new class extends Migration
                 'pending',
                 'approved',
                 'rejected',
+                'suspended',  // ✅ Manquait !
                 'online',
                 'pause',
                 'offline',
-            ])->default('offline')->change();
+            ])->default('pending')->change();
         });
     }
 
     public function down(): void
     {
         Schema::table('drivers', function (Blueprint $table) {
-            $table->string('status')->default('offline')->change();
+            $table->string('status')->default('pending')->change();
         });
     }
 };
