@@ -11,7 +11,7 @@ class SupportMessage extends Model
     protected $fillable = [
         'sender_type', 'sender_id',
         'recipient_type', 'recipient_id',
-        'content', 'is_read', 'read_at',
+        'content', 'is_read', 'read_at', 'trip_id',
     ];
 
     /**

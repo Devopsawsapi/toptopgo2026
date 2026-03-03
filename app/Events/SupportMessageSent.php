@@ -13,9 +13,10 @@ class SupportMessageSent implements ShouldBroadcast
 
     public function __construct(public SupportMessage $message) {}
 
+    // 🔹 Canal dédié au destinataire pour temps réel rapide
     public function broadcastOn(): Channel
     {
-        return new Channel('admin-support');
+        return new Channel('support.' . $this->message->recipient_id);
     }
 
     public function broadcastAs(): string
@@ -30,6 +31,7 @@ class SupportMessageSent implements ShouldBroadcast
             'content'      => $this->message->content,
             'sender_type'  => $this->message->sender_type,
             'sender_id'    => $this->message->sender_id,
+            'recipient_type'=> $this->message->recipient_type,
             'recipient_id' => $this->message->recipient_id,
             'created_at'   => $this->message->created_at->format('d/m H:i'),
         ];

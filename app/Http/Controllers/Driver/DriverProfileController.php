@@ -7,9 +7,8 @@ use App\Http\Requests\Driver\UpdateDocumentsRequest;
 use App\Http\Resources\Driver\DriverResource;
 use App\Services\FileUploadService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
-class ProfileController extends Controller
+class DriverProfileController extends Controller
 {
     public function __construct(private FileUploadService $fileUploadService) {}
 
@@ -21,13 +20,13 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'first_name'     => 'sometimes|string|max:100',
-            'last_name'      => 'sometimes|string|max:100',
-            'vehicle_brand'  => 'sometimes|string|max:100',
-            'vehicle_model'  => 'sometimes|string|max:100',
-            'vehicle_color'  => 'sometimes|string|max:50',
-            'vehicle_country'=> 'sometimes|string|max:100',
-            'vehicle_city'   => 'sometimes|string|max:100',
+            'first_name'      => 'sometimes|string|max:100',
+            'last_name'       => 'sometimes|string|max:100',
+            'vehicle_brand'   => 'sometimes|string|max:100',
+            'vehicle_model'   => 'sometimes|string|max:100',
+            'vehicle_color'   => 'sometimes|string|max:50',
+            'vehicle_country' => 'sometimes|string|max:100',
+            'vehicle_city'    => 'sometimes|string|max:100',
         ]);
 
         $request->user()->update($request->only([
@@ -58,7 +57,6 @@ class ProfileController extends Controller
             }
         }
 
-        // Champs texte
         $textFields = [
             'id_card_issue_date', 'id_card_expiry_date', 'id_card_issue_city', 'id_card_issue_country',
             'license_issue_date', 'license_expiry_date', 'license_issue_city', 'license_issue_country',
@@ -84,23 +82,5 @@ class ProfileController extends Controller
         $path = $this->fileUploadService->uploadProfilePhoto($request->file('photo'), 'drivers');
         $request->user()->update(['profile_photo' => $path]);
         return response()->json(['message' => 'Photo mise à jour.', 'path' => $path]);
-    }
-
-    public function changePassword(Request $request)
-    {
-        $request->validate([
-            'current_password' => 'required|string',
-            'password'         => 'required|string|min:6|confirmed',
-        ]);
-
-        $driver = $request->user();
-
-        if (!Hash::check($request->current_password, $driver->password)) {
-            return response()->json(['message' => 'Mot de passe actuel incorrect.'], 422);
-        }
-
-        $driver->update(['password' => Hash::make($request->password)]);
-
-        return response()->json(['message' => 'Mot de passe modifié avec succès.']);
     }
 }

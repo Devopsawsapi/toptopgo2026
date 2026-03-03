@@ -8,11 +8,11 @@ use App\Services\WalletService;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
 
-class WalletController extends Controller
+class DriverWalletController extends Controller
 {
     public function __construct(private WalletService $walletService) {}
 
-    public function index(Request $request)
+    public function show(Request $request)
     {
         $wallet = Wallet::with('transactions', 'withdrawals')
             ->where('driver_id', $request->user()->id)

@@ -12,9 +12,6 @@ use App\Events\SupportMessageSent;
 
 class AdminDriverSupportController extends Controller
 {
-    /**
-     * Liste TOUS les chauffeurs (avec ou sans messages)
-     */
     public function index(Request $request)
     {
         $query = Driver::withCount(['supportMessages as unread_count' => function ($q) {
@@ -63,9 +60,6 @@ class AdminDriverSupportController extends Controller
         ));
     }
 
-    /**
-     * Affiche la conversation avec un chauffeur spécifique
-     */
     public function show(Request $request, $driverId)
     {
         $driver = Driver::findOrFail($driverId);
@@ -83,7 +77,7 @@ class AdminDriverSupportController extends Controller
             ->oldest()
             ->get();
 
-        // Marquer comme lus les messages reçus par l'admin depuis ce chauffeur
+        // Marquer comme lus
         $adminId = session('admin_id');
         SupportMessage::where('recipient_type', AdminUser::class)
             ->where('recipient_id', $adminId)
@@ -126,9 +120,6 @@ class AdminDriverSupportController extends Controller
         ));
     }
 
-    /**
-     * Envoyer un message à un chauffeur
-     */
     public function send(Request $request, $driverId)
     {
         $request->validate([
@@ -136,34 +127,22 @@ class AdminDriverSupportController extends Controller
         ]);
 
         $driver = Driver::findOrFail($driverId);
-
-        $adminId = session('admin_id');
-
-        if (!$adminId) {
-            $admin = AdminUser::first();
-            $adminId = $admin?->id;
-        }
+        $adminId = session('admin_id') ?? AdminUser::first()?->id;
 
         if (!$adminId) {
             return back()->withErrors(['error' => 'Admin introuvable, reconnectez-vous.']);
         }
 
-        $data = [
+        $message = SupportMessage::create([
             'sender_type'    => AdminUser::class,
             'sender_id'      => $adminId,
             'recipient_type' => Driver::class,
             'recipient_id'   => $driverId,
             'content'        => $request->content,
             'is_read'        => false,
-        ];
+        ]);
 
-        if (Schema::hasColumn('support_messages', 'admin_id')) {
-            $data['admin_id'] = $adminId;
-        }
-
-        $message = SupportMessage::create($data);
-
-        // 🔥 Broadcaster en temps réel via Pusher
+        // 🔥 Broadcast seulement au destinataire pour temps réel
         broadcast(new SupportMessageSent($message))->toOthers();
 
         return redirect()->route('admin.support.drivers.show', $driverId)

@@ -21248,3 +21248,28 @@ DST Off\">2026-02-28 23:59:59.999999 Africa/Brazzaville (+01:00)</span>
 #92 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('C://Users//SMART//...')
 #93 {main}
 "} 
+[2026-03-02 05:50:17] local.ERROR: Class "Schema" not found {"exception":"[object] (Error(code: 0): Class \"Schema\" not found at C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/database/migrations/2026_03_02_054836_add_indexes_to_support_messages_table.php:3)
+[stacktrace]
+#0 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Filesystem/Filesystem.php(148): require_once()
+#1 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Filesystem/Filesystem.php(149): Illuminate/Filesystem/Filesystem::Illuminate/Filesystem/{closure}()
+#2 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(588): Illuminate/Filesystem/Filesystem->requireOnce('C://Users//SMART//...')
+#3 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(131): Illuminate/Database/Migrations/Migrator->requireFiles(Array)
+#4 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(117): Illuminate/Database/Migrations/Migrator->run(Array, Array)
+#5 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(658): Illuminate/Database/Console/Migrations/MigrateCommand->Illuminate/Database/Console/Migrations/{closure}()
+#6 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(110): Illuminate/Database/Migrations/Migrator->usingConnection(NULL, Object(Closure))
+#7 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(89): Illuminate/Database/Console/Migrations/MigrateCommand->runMigrations()
+#8 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate/Database/Console/Migrations/MigrateCommand->handle()
+#9 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate/Container/BoundMethod::Illuminate/Container/{closure}()
+#10 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate/Container/Util::unwrapIfClosure(Object(Closure))
+#11 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod(Object(Illuminate/Foundation/Application), Array, Object(Closure))
+#12 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate/Container/BoundMethod::call(Object(Illuminate/Foundation/Application), Array, Array, NULL)
+#13 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate/Container/Container->call(Array)
+#14 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/symfony/console/Command/Command.php(341): Illuminate/Console/Command->execute(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#15 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony/Component/Console/Command/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#16 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/symfony/console/Application.php(1102): Illuminate/Console/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#17 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/symfony/console/Application.php(356): Symfony/Component/Console/Application->doRunCommand(Object(Illuminate/Database/Console/Migrations/MigrateCommand), Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#18 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#19 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#20 C:/Users/SMART/Desktop/Nouveau dossier/Backendtoptopgo/Backendtoptopgo/artisan(24): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#21 {main}
+"} 

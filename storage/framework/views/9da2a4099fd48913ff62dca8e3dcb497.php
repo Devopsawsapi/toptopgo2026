@@ -263,4 +263,4 @@ function previewImage(event, previewId) {
 <?php echo $__env->yieldPushContent('scripts'); ?>
 
 </body>
-</html><?php /**PATH C:\Users\SMART\Desktop\Nouveau dossier\Backendtoptopgo\Backendtoptopgo\resources\views/admin/layouts/app.blade.php ENDPATH**/ ?>
+</html><?php /**PATH C:\Users\SMART\Desktop\Nouveau dossier\Backendtoptopgo\Backendtoptopgo\resources\views\admin\layouts\app.blade.php ENDPATH**/ ?>

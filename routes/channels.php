@@ -4,45 +4,25 @@ use App\Models\User;
 use App\Models\Ride;
 use Illuminate\Support\Facades\Broadcast;
 
-/*
-|--------------------------------------------------------------------------
-| Broadcast Channels
-|--------------------------------------------------------------------------
-|
-| Here you may register all of the event broadcasting channels that your
-| application supports. The given channel authorization callbacks are
-| used to check if an authenticated user can listen to the channel.
-|
-*/
+// Channel privé pour support messages
+Broadcast::channel('support.{recipientId}', function ($user, $recipientId) {
+    return $user->id == $recipientId;
+});
 
-// User private channel
+// Channels existants
 Broadcast::channel('user.{id}', function (User $user, int $id) {
     return $user->id === $id;
 });
 
-// Ride channel (for passenger and driver)
 Broadcast::channel('ride.{rideId}', function (User $user, int $rideId) {
     $ride = Ride::find($rideId);
-
-    if (!$ride) {
-        return false;
-    }
-
-    return $user->id === $ride->passenger_id || $user->id === $ride->driver_id;
+    return $ride && ($user->id === $ride->passenger_id || $user->id === $ride->driver_id);
 });
 
-// Available drivers presence channel
 Broadcast::channel('drivers.available', function (User $user) {
-    if (!$user->isDriver()) {
-        return false;
-    }
-
+    if (!$user->isDriver()) return false;
     $profile = $user->driverProfile;
-
-    if (!$profile || !$profile->is_online) {
-        return false;
-    }
-
+    if (!$profile || !$profile->is_online) return false;
     return [
         'id' => $user->id,
         'name' => $user->full_name,
@@ -53,12 +33,10 @@ Broadcast::channel('drivers.available', function (User $user) {
     ];
 });
 
-// Public rides channel (for admin monitoring)
 Broadcast::channel('rides', function (User $user) {
     return $user->isAdmin();
 });
 
-// Admin dashboard channel
 Broadcast::channel('admin.dashboard', function (User $user) {
     return $user->isAdmin();
 });

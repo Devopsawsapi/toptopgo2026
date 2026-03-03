@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\DriverLocation;
 
-class LocationController extends Controller
+class DriverLocationController extends Controller
 {
     public function update(Request $request)
     {
