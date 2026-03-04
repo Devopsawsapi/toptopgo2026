@@ -15,36 +15,43 @@ class Trip extends Model
         'status', 'started_at', 'completed_at',
     ];
 
+    // Relation vers le chauffeur
     public function driver()
     {
         return $this->belongsTo(Driver::class);
     }
 
-    public function user()
+    // Relation vers le client (anciennement user)
+    public function client()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
+    // Paiement lié au trajet
     public function payment()
     {
         return $this->hasOne(Payment::class);
     }
 
+    // Réservation liée au trajet
     public function booking()
     {
         return $this->hasOne(Booking::class);
     }
 
+    // Messages liés au trajet
     public function messages()
     {
         return $this->hasMany(Message::class);
     }
 
+    // Appels liés au trajet
     public function calls()
     {
         return $this->hasMany(Call::class);
     }
 
+    // Alertes SOS liées au trajet
     public function sosAlerts()
     {
         return $this->hasMany(SosAlert::class);
