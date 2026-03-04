@@ -7,9 +7,14 @@
 /storage/*.key
 /storage/pail
 /storage/logs/*.log
+
+# Storage framework — ignore contenu MAIS garde les dossiers via .gitkeep
 /storage/framework/cache/*
+!/storage/framework/cache/.gitkeep
 /storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
 /storage/framework/views/*
+!/storage/framework/views/.gitkeep
 
 # Bootstrap cache — NE JAMAIS PUSHER
 /bootstrap/cache/*.php
