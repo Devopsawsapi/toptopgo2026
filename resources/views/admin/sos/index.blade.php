@@ -149,7 +149,6 @@
                                 @endif
 
                                 <div class="flex items-center gap-4 mt-2 text-xs text-gray-400 flex-wrap">
-                                    {{-- ✅ created_at est toujours un Carbon --}}
                                     <span>🕐 {{ $alert->created_at->format('d/m/Y H:i') }}
                                         ({{ $alert->created_at->diffForHumans() }})</span>
 
@@ -161,7 +160,6 @@
                                         <span>📍 {{ number_format($alert->lat, 4) }}, {{ number_format($alert->lng, 4) }}</span>
                                     @endif
 
-                                    {{-- ✅ CORRIGÉ : Carbon::parse pour éviter format() on string --}}
                                     @if($alert->status === 'treated' && $alert->treatedBy)
                                         <span>✅ Traité par {{ $alert->treatedBy->name ?? '—' }}
                                             le {{ $alert->treated_at ? \Carbon\Carbon::parse($alert->treated_at)->format('d/m/Y H:i') : '—' }}
@@ -250,10 +248,12 @@ function updateSosMap(alerts) {
         if (!a.lat || !a.lng) return;
         seen.add(a.id);
         const popup = `
-            <div style="min-width:180px; font-family:sans-serif;">
+            <div style="min-width:210px; font-family:sans-serif;">
                 <div style="font-weight:bold; color:#ef4444; font-size:14px; margin-bottom:6px;">🆘 Alerte SOS</div>
-                <div style="font-size:12px; color:#555; line-height:1.8;">
+                <div style="font-size:12px; color:#555; line-height:2;">
                     ${a.sender_type === 'driver' ? '🚗' : '👤'} <b>${a.sender_name}</b><br>
+                    ${a.phone ? '📞 ' + a.phone + '<br>' : ''}
+                    ${a.vehicle ? '🚘 ' + a.vehicle + '<br>' : ''}
                     ${a.message ? '💬 ' + a.message + '<br>' : ''}
                     🕐 ${a.created_at}<br>
                     ${a.trip_id ? '🚕 Course #' + a.trip_id : ''}
