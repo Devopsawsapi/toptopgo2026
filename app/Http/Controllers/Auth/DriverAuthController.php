@@ -51,10 +51,19 @@ class DriverAuthController extends Controller
 
         $driver = Driver::where('phone', $request->phone)->first();
 
+        // Identifiants incorrects
         if (!$driver || !Hash::check($request->password, $driver->password)) {
             throw ValidationException::withMessages([
                 'phone' => ['Identifiants incorrects.'],
             ]);
+        }
+
+        // Compte suspendu — connexion bloquée
+        if ($driver->status === 'suspended') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Votre compte a été suspendu. Veuillez contacter le support TopTopGo.',
+            ], 403);
         }
 
         $token = $driver->createToken('driver-token')->plainTextToken;
