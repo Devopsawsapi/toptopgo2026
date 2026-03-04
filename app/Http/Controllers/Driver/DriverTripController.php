@@ -15,15 +15,18 @@ class DriverTripController extends Controller
 {
     public function __construct(private TripService $tripService) {}
 
+    // ── Liste des trajets du chauffeur connecté ──────────────────────
     public function index(Request $request)
     {
-        $trips = Trip::with('user', 'payment')
+        $trips = Trip::with('client', 'payment')   // ✅ 'client' (pas 'user')
                      ->where('driver_id', $request->user()->id)
                      ->latest()
                      ->paginate(20);
+
         return TripResource::collection($trips);
     }
 
+    // ── Création d'un trajet ─────────────────────────────────────────
     public function store(Request $request)
     {
         $request->validate([
@@ -46,7 +49,7 @@ class DriverTripController extends Controller
             'available_seats'   => $request->available_seats,
             'departure_date'    => $request->departure_date,
             'departure_time'    => $request->departure_time,
-            'luggage_included'  => $request->luggage_included ?? 1,
+            'luggage_included'  => $request->luggage_included  ?? 1,
             'extra_luggage_fee' => $request->extra_luggage_fee ?? 0,
             'vehicle_type'      => $request->vehicle_type,
             'status'            => 'pending',
@@ -59,64 +62,94 @@ class DriverTripController extends Controller
         ], 201);
     }
 
+    // ── Détail d'un trajet ───────────────────────────────────────────
     public function show(Request $request, $id)
     {
-        $trip = Trip::where('id', $id)
+        $trip = Trip::with('client', 'payment')    // ✅ 'client' ajouté
+                    ->where('id', $id)
                     ->where('driver_id', $request->user()->id)
                     ->firstOrFail();
+
         return new TripResource($trip);
     }
 
+    // ── Trajets disponibles (pour d'autres chauffeurs) ───────────────
     public function available(Request $request)
     {
         $driver = $request->user();
+
         if ($driver->status !== 'approved') {
             return response()->json(['message' => 'Compte non approuvé.'], 403);
         }
-        $trips = Trip::with('user')->where('status', 'pending')->latest()->get();
+
+        $trips = Trip::with('client')              // ✅ 'client' (pas 'user')
+                     ->where('status', 'pending')
+                     ->latest()
+                     ->get();
+
         return TripResource::collection($trips);
     }
 
+    // ── Accepter un trajet ───────────────────────────────────────────
     public function accept(Request $request, $id)
     {
         $driver = $request->user();
+
         if ($driver->status !== 'approved') {
             return response()->json(['message' => 'Compte non approuvé.'], 403);
         }
-        $trip = Trip::where('id', $id)->where('status', 'pending')->firstOrFail();
+
+        $trip = Trip::where('id', $id)
+                    ->where('status', 'pending')
+                    ->firstOrFail();
+
         $trip->update(['driver_id' => $driver->id, 'status' => 'accepted']);
-        $trip->user?->notify(new TripAcceptedNotification($trip->load('driver')));
+
+        // ✅ 'client' (pas 'user') pour la notification
+        $trip->client?->notify(new TripAcceptedNotification($trip->load('driver')));
+
         TripStatusUpdated::dispatch($trip);
+
         return response()->json([
             'message' => 'Course acceptée.',
-            'trip'    => new TripResource($trip->load('user')),
+            'trip'    => new TripResource($trip->load('client')), // ✅
         ]);
     }
 
+    // ── Démarrer un trajet ───────────────────────────────────────────
     public function start(Request $request, $id)
     {
         $trip = Trip::where('id', $id)
                     ->where('driver_id', $request->user()->id)
                     ->where('status', 'accepted')
                     ->firstOrFail();
+
         $trip->update(['status' => 'in_progress', 'started_at' => now()]);
+
         TripStatusUpdated::dispatch($trip);
+
         return response()->json([
             'message' => 'Course démarrée.',
             'trip'    => new TripResource($trip),
         ]);
     }
 
+    // ── Terminer un trajet ───────────────────────────────────────────
     public function end(Request $request, $id)
     {
         $trip = Trip::where('id', $id)
                     ->where('driver_id', $request->user()->id)
                     ->where('status', 'in_progress')
                     ->firstOrFail();
+
         $this->tripService->completeTrip($trip);
-        $trip->user?->notify(new TripCompletedNotification($trip));
+
+        // ✅ 'client' (pas 'user') pour la notification
+        $trip->client?->notify(new TripCompletedNotification($trip));
         $request->user()->notify(new TripCompletedNotification($trip));
+
         TripStatusUpdated::dispatch($trip);
+
         return response()->json([
             'message' => 'Course terminée.',
             'trip'    => new TripResource($trip),

@@ -11,7 +11,8 @@ use App\Http\Controllers\Admin\AdminDriverSupportController;
 use App\Http\Controllers\Admin\RevenueController;
 use App\Http\Controllers\Admin\CommissionRateController;
 use App\Http\Controllers\Admin\PaymentPartnerController;
-use App\Http\Controllers\Admin\SosAlertController;  // ✅ NOUVEAU
+use App\Http\Controllers\Admin\SosAlertController;
+use App\Http\Controllers\Admin\MapController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -59,9 +60,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         | GÉOLOCALISATION LIVE
         |--------------------------------------------------------------------------
         */
-        Route::get('geolocation', function () {
-            return view('admin.geolocation'); // Assurez-vous que le fichier existe
-        })->name('geolocation');
+        Route::get('geolocation', [MapController::class, 'index'])->name('geolocation');
+        Route::get('geolocation/trips', [MapController::class, 'trips'])->name('geolocation.trips');
 
         /*
         |--------------------------------------------------------------------------
