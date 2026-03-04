@@ -13,6 +13,10 @@ class SosAlert extends Model
         'status', 'treated_by', 'treated_at',
     ];
 
+    protected $casts = [
+        'treated_at' => 'datetime',
+    ];
+
     public function sender() { return $this->morphTo(); }
     public function trip() { return $this->belongsTo(Trip::class); }
     public function treatedBy() { return $this->belongsTo(AdminUser::class, 'treated_by'); }
