@@ -34,7 +34,6 @@ class DriverAuthController extends Controller
             'status'        => 'pending',
         ]);
 
-        // Créer le wallet automatiquement
         Wallet::create(['driver_id' => $driver->id, 'balance' => 0, 'currency' => 'XAF']);
 
         $token = $driver->createToken('driver-token')->plainTextToken;
@@ -45,13 +44,22 @@ class DriverAuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'phone'    => 'required|string',
             'password' => 'required|string',
         ]);
 
-        $driver = Driver::where('phone', $request->phone)->first();
+        // Connexion par téléphone ou email
+        $driver = null;
+        if ($request->filled('phone')) {
+            $driver = Driver::where('phone', $request->phone)->first();
+        } elseif ($request->filled('email')) {
+            $driver = Driver::where('email', $request->email)->first();
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Téléphone ou email requis.',
+            ], 422);
+        }
 
-        // Identifiants incorrects
         if (!$driver || !Hash::check($request->password, $driver->password)) {
             throw ValidationException::withMessages([
                 'phone' => ['Identifiants incorrects.'],
@@ -68,7 +76,7 @@ class DriverAuthController extends Controller
 
         $token = $driver->createToken('driver-token')->plainTextToken;
 
-        return response()->json(['token' => $token, 'driver' => $driver]);
+        return response()->json(['success' => true, 'token' => $token, 'driver' => $driver]);
     }
 
     public function logout(Request $request)
@@ -80,5 +88,87 @@ class DriverAuthController extends Controller
     public function me(Request $request)
     {
         return response()->json($request->user()->load('wallet'));
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required_without:email|string|nullable',
+            'email' => 'required_without:phone|email|nullable',
+        ]);
+
+        $driver = null;
+        if ($request->filled('phone')) {
+            $driver = Driver::where('phone', $request->phone)->first();
+        } elseif ($request->filled('email')) {
+            $driver = Driver::where('email', $request->email)->first();
+        }
+
+        // On retourne toujours succès pour ne pas exposer si le compte existe
+        if (!$driver) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Si ce compte existe, un SMS/email de réinitialisation a été envoyé.',
+            ]);
+        }
+
+        // Générer un code temporaire à 6 chiffres
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $driver->update([
+            'otp'            => Hash::make($code),
+            'otp_expires_at' => now()->addMinutes(15),
+        ]);
+
+        // TODO: Envoyer le code par SMS (ex: Twilio, Africa's Talking)
+        // SmsService::send($driver->phone, "Votre code TopTopGo : $code");
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Si ce compte existe, un SMS/email de réinitialisation a été envoyé.',
+            // En dev seulement — retirer en production :
+            '_dev_code' => config('app.debug') ? $code : null,
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'phone'    => 'required_without:email|nullable|string',
+            'email'    => 'required_without:phone|nullable|email',
+            'code'     => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $driver = null;
+        if ($request->filled('phone')) {
+            $driver = Driver::where('phone', $request->phone)->first();
+        } elseif ($request->filled('email')) {
+            $driver = Driver::where('email', $request->email)->first();
+        }
+
+        if (!$driver || !$driver->otp || !Hash::check($request->code, $driver->otp)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Code invalide.',
+            ], 422);
+        }
+
+        if ($driver->otp_expires_at < now()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Code expiré. Veuillez recommencer.',
+            ], 422);
+        }
+
+        $driver->update([
+            'password'       => Hash::make($request->password),
+            'otp'            => null,
+            'otp_expires_at' => null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mot de passe réinitialisé avec succès.',
+        ]);
     }
 }

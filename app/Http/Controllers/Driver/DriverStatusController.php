@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Driver;
 
 use App\Http\Controllers\Controller;
-use App\Events\DriverStatusUpdated;  // ✅ Ajouté
+use App\Events\DriverStatusUpdated;
 use Illuminate\Http\Request;
 
 class DriverStatusController extends Controller
@@ -15,15 +15,15 @@ class DriverStatusController extends Controller
         ]);
 
         $driver = $request->user();
-        $driver->status = $request->status;
+        $driver->driver_status = $request->status; // ✅ Corrigé : driver_status et non status
         $driver->save();
 
-        broadcast(new DriverStatusUpdated($driver));  // ✅ Ajouté
+        broadcast(new DriverStatusUpdated($driver));
 
         return response()->json([
             'success' => true,
             'message' => 'Statut mis à jour avec succès.',
-            'status'  => $driver->status,
+            'status'  => $driver->driver_status,
         ]);
     }
 
@@ -33,7 +33,7 @@ class DriverStatusController extends Controller
 
         return response()->json([
             'success' => true,
-            'status'  => $driver->status,
+            'status'  => $driver->driver_status, // ✅ Corrigé
         ]);
     }
 }
