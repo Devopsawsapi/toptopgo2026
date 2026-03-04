@@ -48,11 +48,20 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // DASHBOARD
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-        // ✅ API temps réel positions chauffeurs (AVANT drivers/{id})
+        // ✅ API temps réel positions chauffeurs
         Route::get('drivers/live', [DashboardController::class, 'liveDrivers'])->name('drivers.live');
 
         // LOGOUT
         Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
+
+        /*
+        |--------------------------------------------------------------------------
+        | GÉOLOCALISATION LIVE
+        |--------------------------------------------------------------------------
+        */
+        Route::get('geolocation', function () {
+            return view('admin.geolocation'); // Assurez-vous que le fichier existe
+        })->name('geolocation');
 
         /*
         |--------------------------------------------------------------------------
@@ -129,7 +138,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         |--------------------------------------------------------------------------
         */
         Route::prefix('sos')->name('sos.')->group(function () {
-            Route::get('/live',        [SosAlertController::class, 'live'])->name('live');        // API JSON (AVANT /{id})
+            Route::get('/live',        [SosAlertController::class, 'live'])->name('live');
             Route::get('/',            [SosAlertController::class, 'index'])->name('index');
             Route::post('/treat-all',  [SosAlertController::class, 'treatAll'])->name('treat-all');
             Route::get('/{id}',        [SosAlertController::class, 'show'])->name('show');
