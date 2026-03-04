@@ -13,7 +13,7 @@ class TripController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Trip::with(['driver', 'client']); // "client" au lieu de "user"
+        $query = Trip::with(['driver', 'client']); // client au lieu de user
 
         if ($request->status) {
             $query->where('status', $request->status);

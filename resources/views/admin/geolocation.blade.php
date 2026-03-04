@@ -102,8 +102,9 @@ function loadTrips() {
                     pickupMarker.addTo(map);
                     markers.push(pickupMarker);
 
-                    const dropoffMarker = L.marker([trip.dropoff_lat, trip.dropoff_lng], {icon: L.icon({iconUrl:'https://maps.google.com/mapfiles/ms/icons/green-dot.png',iconSize:[32,32]})})
-                        .bindPopup(`<strong>Arrivée</strong><br>${trip.dropoff_address}<br>Client: ${trip.client?.name || '-'}`);
+                    const dropoffMarker = L.marker([trip.dropoff_lat, trip.dropoff_lng], {
+                        icon: L.icon({iconUrl:'https://maps.google.com/mapfiles/ms/icons/green-dot.png',iconSize:[32,32]})
+                    }).bindPopup(`<strong>Arrivée</strong><br>${trip.dropoff_address}<br>Client: ${trip.client?.name || '-'}`);
                     dropoffMarker.addTo(map);
                     markers.push(dropoffMarker);
 
@@ -124,6 +125,6 @@ function loadTrips() {
 
 document.getElementById('filterBtn').addEventListener('click', loadTrips);
 loadTrips();
-setInterval(loadTrips, 15000); // auto refresh
+setInterval(loadTrips, 15000); // auto refresh toutes les 15s
 </script>
 @endsection
