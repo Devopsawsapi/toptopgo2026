@@ -12,8 +12,7 @@ class UserTripController extends Controller
     public function index(Request $request)
     {
         $trips = Trip::with('driver')
-            ->where('status', 'pending')
-            ->whereDate('departure_date', '>=', now()->toDateString())
+            ->where('status', 'pending') // uniquement les trajets en attente
             ->latest()
             ->paginate(20);
 

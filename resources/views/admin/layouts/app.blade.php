@@ -151,11 +151,11 @@
             </a>
 
             <a href="#" class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300">
-                🌍 Pays
+                🌍 Objectif Commercial
             </a>
 
             <a href="#" class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300">
-                🏙️ Villes
+                🏙️ Gestion des Mots de Passes
             </a>
 
         </nav>
