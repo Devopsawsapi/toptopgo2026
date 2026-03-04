@@ -78,13 +78,12 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($drivers as $driver)
-                <tr class="hover:bg-gray-50 transition">
+                <tr class="hover:bg-gray-50 transition" id="driver-row-{{ $driver->id }}">
 
                     <!-- Nom -->
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             @if($driver->profile_photo)
-                                {{-- ✅ L'accessor retourne directement l'URL complète Backblaze --}}
                                 <img src="{{ $driver->profile_photo }}"
                                      class="w-9 h-9 rounded-full object-cover border"
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -132,21 +131,23 @@
                         @endif
                     </td>
 
-                    <!-- Driver status -->
+                    <!-- Statut En ligne — mis à jour en temps réel via Pusher -->
                     <td class="px-6 py-4">
-                        @if($driver->driver_status == 'online')
-                            <span class="flex items-center gap-1 text-green-600 text-xs font-semibold">
-                                <span class="w-2 h-2 bg-green-500 rounded-full"></span> En ligne
-                            </span>
-                        @elseif($driver->driver_status == 'pause')
-                            <span class="flex items-center gap-1 text-yellow-600 text-xs font-semibold">
-                                <span class="w-2 h-2 bg-yellow-500 rounded-full"></span> Pause
-                            </span>
-                        @else
-                            <span class="flex items-center gap-1 text-gray-400 text-xs font-semibold">
-                                <span class="w-2 h-2 bg-gray-400 rounded-full"></span> Hors ligne
-                            </span>
-                        @endif
+                        <span id="driver-status-{{ $driver->id }}">
+                            @if($driver->driver_status == 'online')
+                                <span class="flex items-center gap-1 text-green-600 text-xs font-semibold">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> En ligne
+                                </span>
+                            @elseif($driver->driver_status == 'pause')
+                                <span class="flex items-center gap-1 text-yellow-600 text-xs font-semibold">
+                                    <span class="w-2 h-2 bg-yellow-500 rounded-full"></span> Pause
+                                </span>
+                            @else
+                                <span class="flex items-center gap-1 text-gray-400 text-xs font-semibold">
+                                    <span class="w-2 h-2 bg-gray-400 rounded-full"></span> Hors ligne
+                                </span>
+                            @endif
+                        </span>
                     </td>
 
                     <!-- Date -->
@@ -171,7 +172,8 @@
                             @if($driver->status == 'pending')
                                 <form method="POST" action="{{ route('admin.drivers.approve', $driver->id) }}">
                                     @csrf
-                                    <button type="submit" class="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-green-200 transition">
+                                    <button type="submit"
+                                            class="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-green-200 transition">
                                         ✅ Approuver
                                     </button>
                                 </form>
@@ -196,6 +198,14 @@
                                     <button type="submit"
                                             class="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-green-200 transition">
                                         ✅ Réactiver
+                                    </button>
+                                </form>
+                            @elseif($driver->status == 'rejected')
+                                <form method="POST" action="{{ route('admin.drivers.approve', $driver->id) }}">
+                                    @csrf
+                                    <button type="submit"
+                                            class="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-green-200 transition">
+                                        ✅ Approuver
                                     </button>
                                 </form>
                             @endif
@@ -232,3 +242,48 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<!-- Pusher JS -->
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script>
+    // Connexion Pusher
+    const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
+        cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
+        forceTLS: true,
+    });
+
+    // Écoute le canal drivers.status
+    const channel = pusher.subscribe('drivers.status');
+
+    channel.bind('status.updated', function(data) {
+        const el = document.getElementById('driver-status-' + data.driver_id);
+        if (!el) return;
+
+        let html = '';
+        if (data.status === 'online') {
+            html = `<span class="flex items-center gap-1 text-green-600 text-xs font-semibold">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> En ligne
+                    </span>`;
+        } else if (data.status === 'pause') {
+            html = `<span class="flex items-center gap-1 text-yellow-600 text-xs font-semibold">
+                        <span class="w-2 h-2 bg-yellow-500 rounded-full"></span> Pause
+                    </span>`;
+        } else {
+            html = `<span class="flex items-center gap-1 text-gray-400 text-xs font-semibold">
+                        <span class="w-2 h-2 bg-gray-400 rounded-full"></span> Hors ligne
+                    </span>`;
+        }
+
+        el.innerHTML = html;
+
+        // Flash visuel sur la ligne
+        const row = document.getElementById('driver-row-' + data.driver_id);
+        if (row) {
+            row.style.transition = 'background 0.3s';
+            row.style.background = '#f0fdf4';
+            setTimeout(() => row.style.background = '', 1500);
+        }
+    });
+</script>
+@endpush
