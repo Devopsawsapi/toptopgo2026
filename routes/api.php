@@ -145,8 +145,10 @@ Route::prefix('admin')->name('api.admin.')->middleware(['auth:sanctum'])->group(
 */
 Route::prefix('driver')->name('api.driver.')->middleware(['auth:sanctum'])->group(function () {
 
-    Route::get('profile', [DriverProfileController::class, 'show'])->name('profile.show');
-    Route::put('profile', [DriverProfileController::class, 'update'])->name('profile.update');
+    Route::get('profile',  [DriverProfileController::class, 'show'])->name('profile.show');
+    Route::put('profile',  [DriverProfileController::class, 'update'])->name('profile.update');
+    // ✅ FIX: upload photo de profil chauffeur (résout l'erreur "Erreur upload : 404")
+    Route::post('profile/photo', [DriverProfileController::class, 'uploadPhoto'])->name('profile.photo');
 
     Route::put('password', [DriverPasswordController::class, 'update'])->name('password.update');
     Route::put('status',   [DriverStatusController::class, 'update'])->name('status.update');
@@ -164,9 +166,9 @@ Route::prefix('driver')->name('api.driver.')->middleware(['auth:sanctum'])->grou
     Route::get('sos',  [DriverSosController::class, 'index'])->name('sos.index');
     Route::post('sos', [DriverSosController::class, 'store'])->name('sos.store');
 
-    Route::get('messages',           [DriverMessageController::class, 'index'])->name('messages.index');
-    Route::get('messages/{trip_id}', [DriverMessageController::class, 'show'])->name('messages.show');
-    Route::post('messages/{trip_id}',[DriverMessageController::class, 'store'])->name('messages.store');
+    Route::get('messages',            [DriverMessageController::class, 'index'])->name('messages.index');
+    Route::get('messages/{trip_id}',  [DriverMessageController::class, 'show'])->name('messages.show');
+    Route::post('messages/{trip_id}', [DriverMessageController::class, 'store'])->name('messages.store');
 
     Route::get('support',  [DriverSupportController::class, 'index'])->name('support.index');
     Route::post('support', [DriverSupportController::class, 'store'])->name('support.store');
@@ -177,9 +179,9 @@ Route::prefix('driver')->name('api.driver.')->middleware(['auth:sanctum'])->grou
     Route::delete('documents/{id}', [DriverDocumentController::class, 'destroy'])->name('documents.destroy');
 
     // ── Réservations reçues par le chauffeur ──────────────────────
-    Route::get('bookings',                [DriverTripController::class, 'bookings'])->name('bookings.index');
-    Route::post('bookings/{id}/confirm',  [DriverTripController::class, 'confirmBooking'])->name('bookings.confirm');
-    Route::post('bookings/{id}/reject',   [DriverTripController::class, 'rejectBooking'])->name('bookings.reject');
+    Route::get('bookings',               [DriverTripController::class, 'bookings'])->name('bookings.index');
+    Route::post('bookings/{id}/confirm', [DriverTripController::class, 'confirmBooking'])->name('bookings.confirm');
+    Route::post('bookings/{id}/reject',  [DriverTripController::class, 'rejectBooking'])->name('bookings.reject');
 });
 
 /*
@@ -192,6 +194,8 @@ Route::prefix('user')->name('api.user.')->middleware(['auth:sanctum'])->group(fu
     // ── Profil ────────────────────────────────────────────────────
     Route::get('profile', [UserProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [UserProfileController::class, 'update'])->name('profile.update');
+    // ✅ FIX: upload photo client
+    Route::post('profile/photo', [UserProfileController::class, 'uploadPhoto'])->name('profile.photo');
 
     // ── Mot de passe ──────────────────────────────────────────────
     Route::put('password', [UserPasswordController::class, 'update'])->name('password.update');
@@ -221,4 +225,16 @@ Route::prefix('user')->name('api.user.')->middleware(['auth:sanctum'])->group(fu
     // ── Support ───────────────────────────────────────────────────
     Route::get('support',  [UserSupportController::class, 'index'])->name('support.index');
     Route::post('support', [UserSupportController::class, 'store'])->name('support.store');
+
+    // ── SOS client ───────────────────────────────────────────────
+    Route::post('sos', function (\Illuminate\Http\Request $request) {
+        // Simple log SOS — à connecter à SosAlertController si besoin
+        \Illuminate\Support\Facades\Log::warning('SOS CLIENT', [
+            'user_id' => $request->user()?->id,
+            'trip_id' => $request->trip_id,
+            'lat'     => $request->latitude,
+            'lng'     => $request->longitude,
+        ]);
+        return response()->json(['success' => true, 'message' => 'SOS reçu']);
+    })->name('sos');
 });
