@@ -5,6 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Driver\Driver;
 use App\Models\User\User;
+use App\Models\Vehicle;
+use App\Models\Payment;
+use App\Models\Booking;
+use App\Models\Message;
+use App\Models\Call;
+use App\Models\SosAlert;
 
 class Trip extends Model
 {
@@ -31,6 +37,11 @@ class Trip extends Model
     public function driver()
     {
         return $this->belongsTo(Driver::class);
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
     }
 
     public function client()
