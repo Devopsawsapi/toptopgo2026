@@ -33,7 +33,7 @@ use App\Http\Controllers\Driver\DriverDocumentController;
 use App\Http\Controllers\Driver\DriverPasswordController;
 use App\Http\Controllers\Driver\DriverProfileController;
 
-// ── User (Client) Controllers ✅ NOUVEAU
+// ── User (Client) Controllers
 use App\Http\Controllers\User\UserProfileController;
 use App\Http\Controllers\User\UserTripController;
 use App\Http\Controllers\User\UserBookingController;
@@ -81,7 +81,7 @@ Route::prefix('driver/auth')->group(function () {
     });
 });
 
-// User (Client) Auth ✅
+// User (Client) Auth
 Route::prefix('user/auth')->group(function () {
     Route::post('register',        [UserAuthController::class, 'register']);
     Route::post('login',           [UserAuthController::class, 'login']);
@@ -111,8 +111,8 @@ Route::prefix('admin')->name('api.admin.')->middleware(['auth:sanctum'])->group(
         Route::apiResource('users', UserController::class)->only(['index','show'])->names('api.users');
         Route::get('trips', [TripController::class, 'index'])->name('trips');
 
-        Route::get('support/drivers',             [AdminDriverSupportController::class, 'index'])->name('support.drivers.index');
-        Route::get('support/drivers/{driver}',    [AdminDriverSupportController::class, 'show'])->name('support.drivers.show');
+        Route::get('support/drivers',                [AdminDriverSupportController::class, 'index'])->name('support.drivers.index');
+        Route::get('support/drivers/{driver}',       [AdminDriverSupportController::class, 'show'])->name('support.drivers.show');
         Route::post('support/drivers/{driver}/send', [AdminDriverSupportController::class, 'send'])->name('support.drivers.send');
 
         Route::get('support/users',               [AdminUserSupportController::class, 'index'])->name('support.users.index');
@@ -132,9 +132,9 @@ Route::prefix('admin')->name('api.admin.')->middleware(['auth:sanctum'])->group(
     });
 
     Route::middleware('role.permission:Commercial Manager')->group(function () {
-        Route::get('stats/overview',     [StatisticsController::class, 'overview'])->name('stats.overview');
-        Route::get('stats/daily',        [StatisticsController::class, 'daily'])->name('stats.daily');
-        Route::get('stats/top-drivers',  [StatisticsController::class, 'topDrivers'])->name('stats.top-drivers');
+        Route::get('stats/overview',    [StatisticsController::class, 'overview'])->name('stats.overview');
+        Route::get('stats/daily',       [StatisticsController::class, 'daily'])->name('stats.daily');
+        Route::get('stats/top-drivers', [StatisticsController::class, 'topDrivers'])->name('stats.top-drivers');
     });
 });
 
@@ -164,22 +164,27 @@ Route::prefix('driver')->name('api.driver.')->middleware(['auth:sanctum'])->grou
     Route::get('sos',  [DriverSosController::class, 'index'])->name('sos.index');
     Route::post('sos', [DriverSosController::class, 'store'])->name('sos.store');
 
-    Route::get('messages',          [DriverMessageController::class, 'index'])->name('messages.index');
+    Route::get('messages',           [DriverMessageController::class, 'index'])->name('messages.index');
     Route::get('messages/{trip_id}', [DriverMessageController::class, 'show'])->name('messages.show');
     Route::post('messages/{trip_id}',[DriverMessageController::class, 'store'])->name('messages.store');
 
     Route::get('support',  [DriverSupportController::class, 'index'])->name('support.index');
     Route::post('support', [DriverSupportController::class, 'store'])->name('support.store');
 
-    Route::get('documents',      [DriverDocumentController::class, 'index'])->name('documents.index');
-    Route::post('documents',     [DriverDocumentController::class, 'store'])->name('documents.store');
-    Route::get('documents/{id}', [DriverDocumentController::class, 'show'])->name('documents.show');
+    Route::get('documents',         [DriverDocumentController::class, 'index'])->name('documents.index');
+    Route::post('documents',        [DriverDocumentController::class, 'store'])->name('documents.store');
+    Route::get('documents/{id}',    [DriverDocumentController::class, 'show'])->name('documents.show');
     Route::delete('documents/{id}', [DriverDocumentController::class, 'destroy'])->name('documents.destroy');
+
+    // ── Réservations reçues par le chauffeur ──────────────────────
+    Route::get('bookings',                [DriverTripController::class, 'bookings'])->name('bookings.index');
+    Route::post('bookings/{id}/confirm',  [DriverTripController::class, 'confirmBooking'])->name('bookings.confirm');
+    Route::post('bookings/{id}/reject',   [DriverTripController::class, 'rejectBooking'])->name('bookings.reject');
 });
 
 /*
 |--------------------------------------------------------------------------
-| USER (CLIENT) API ROUTES ✅ NOUVEAU
+| USER (CLIENT) API ROUTES
 |--------------------------------------------------------------------------
 */
 Route::prefix('user')->name('api.user.')->middleware(['auth:sanctum'])->group(function () {
@@ -196,10 +201,12 @@ Route::prefix('user')->name('api.user.')->middleware(['auth:sanctum'])->group(fu
     Route::get('trips/{id}', [UserTripController::class, 'show'])->name('trips.show');
 
     // ── Réservations ──────────────────────────────────────────────
-    Route::get('bookings',             [UserBookingController::class, 'index'])->name('bookings.index');
-    Route::post('bookings',            [UserBookingController::class, 'store'])->name('bookings.store');
-    Route::get('bookings/{id}',        [UserBookingController::class, 'show'])->name('bookings.show');
-    Route::post('bookings/{id}/cancel',[UserBookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::get('bookings',              [UserBookingController::class, 'index'])->name('bookings.index');
+    Route::post('bookings',             [UserBookingController::class, 'store'])->name('bookings.store');
+    Route::get('bookings/{id}',         [UserBookingController::class, 'show'])->name('bookings.show');
+    Route::post('bookings/{id}/accept', [UserBookingController::class, 'accept'])->name('bookings.accept');
+    Route::post('bookings/{id}/reject', [UserBookingController::class, 'reject'])->name('bookings.reject');
+    Route::post('bookings/{id}/cancel', [UserBookingController::class, 'cancel'])->name('bookings.cancel');
 
     // ── Paiements ─────────────────────────────────────────────────
     Route::post('payments/mobile-money', [UserPaymentController::class, 'mobileMoney'])->name('payments.mobile-money');
@@ -207,9 +214,9 @@ Route::prefix('user')->name('api.user.')->middleware(['auth:sanctum'])->group(fu
     Route::get('payments/status',        [UserPaymentController::class, 'status'])->name('payments.status');
 
     // ── Messages avec chauffeur ───────────────────────────────────
-    Route::get('messages',          [UserMessageController::class, 'index'])->name('messages.index');
-    Route::get('messages/{userId}', [UserMessageController::class, 'show'])->name('messages.show');
-    Route::post('messages/{userId}',[UserMessageController::class, 'store'])->name('messages.store');
+    Route::get('messages',           [UserMessageController::class, 'index'])->name('messages.index');
+    Route::get('messages/{userId}',  [UserMessageController::class, 'show'])->name('messages.show');
+    Route::post('messages/{userId}', [UserMessageController::class, 'store'])->name('messages.store');
 
     // ── Support ───────────────────────────────────────────────────
     Route::get('support',  [UserSupportController::class, 'index'])->name('support.index');

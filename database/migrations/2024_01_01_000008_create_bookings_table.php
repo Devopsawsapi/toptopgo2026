@@ -11,7 +11,17 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('trip_id')->constrained('trips')->onDelete('cascade');
-            $table->enum('status', ['pending', 'confirmed', 'cancelled'])->default('pending');
+            $table->integer('passengers')->default(1);
+            $table->decimal('amount', 10, 2)->default(0);
+            $table->enum('status', [
+                'pending',
+                'confirmed',
+                'accepted',
+                'rejected',
+                'cancelled',
+                'paid',
+                'completed',
+            ])->default('pending');
             $table->timestamp('booked_at')->nullable();
             $table->timestamps();
         });
