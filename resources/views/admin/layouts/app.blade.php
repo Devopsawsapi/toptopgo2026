@@ -144,9 +144,9 @@
                 Localisation
             </p>
 
-            <a href="{{ route('admin.geolocation') }}"
+            <a href="{{ route('admin.trips.index') }}"
                class="block px-4 py-2 rounded-lg hover:bg-[#1DA1F2] hover:pl-6 transition-all duration-300
-               {{ request()->routeIs('admin.geolocation') ? 'bg-[#1DA1F2] pl-6' : '' }}">
+               {{ request()->routeIs('admin.trips.index') ? 'bg-[#1DA1F2] pl-6' : '' }}">
                 📍 Trajets et Courses
             </a>
 
