@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TripResource;
 use App\Services\TripService;
 use App\Events\TripStatusUpdated;
+use App\Events\TripPublished;
+use App\Events\BookingConfirmed;
 use App\Notifications\TripAcceptedNotification;
 use App\Notifications\TripCompletedNotification;
 use App\Models\Trip;
@@ -43,18 +45,21 @@ class DriverTripController extends Controller
         ]);
 
         $trip = Trip::create([
-            'driver_id'         => $request->user()->id,
-            'pickup_address'    => $request->departure,
-            'dropoff_address'   => $request->destination,
-            'departure_city'    => $request->departure,
-            'destination_city'  => $request->destination,
-            'amount'            => $request->price_per_seat,
-            'available_seats'   => $request->available_seats,
-            'departure_time'    => $request->departure_date . ' ' . $request->departure_time,
-            'luggage_kg'        => $request->luggage_included  ?? 1,
-            'vehicle_type'      => $request->vehicle_type,
-            'status'            => 'pending',
+            'driver_id'        => $request->user()->id,
+            'pickup_address'   => $request->departure,
+            'dropoff_address'  => $request->destination,
+            'departure_city'   => $request->departure,
+            'destination_city' => $request->destination,
+            'amount'           => $request->price_per_seat,
+            'available_seats'  => $request->available_seats,
+            'departure_time'   => $request->departure_date . ' ' . $request->departure_time,
+            'luggage_kg'       => $request->luggage_included ?? 1,
+            'vehicle_type'     => $request->vehicle_type,
+            'status'           => 'pending',
         ]);
+
+        // 🔔 Notifier tous les clients qu'un nouveau trajet est disponible
+        TripPublished::dispatch($trip->load('driver'));
 
         return response()->json([
             'success' => true,
@@ -222,9 +227,11 @@ class DriverTripController extends Controller
             ], 422);
         }
 
-        // Réduire les places disponibles
         $booking->trip->decrement('available_seats', $booking->passengers ?? 1);
         $booking->update(['status' => 'confirmed']);
+
+        // 🔔 Notifier le client que sa réservation est confirmée
+        BookingConfirmed::dispatch($booking->load('trip'));
 
         return response()->json([
             'success' => true,
@@ -247,6 +254,11 @@ class DriverTripController extends Controller
                 'success' => false,
                 'message' => 'Cette réservation ne peut pas être rejetée.',
             ], 422);
+        }
+
+        // Restituer les places si déjà confirmée
+        if ($booking->status === 'confirmed') {
+            $booking->trip->increment('available_seats', $booking->passengers ?? 1);
         }
 
         $booking->update(['status' => 'rejected']);

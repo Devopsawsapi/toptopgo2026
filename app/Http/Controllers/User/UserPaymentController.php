@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Events\PaymentValidated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -24,15 +25,13 @@ class UserPaymentController extends Controller
             ->where('user_id', Auth::id())
             ->findOrFail($request->booking_id);
 
-        // Vérifier que la réservation est acceptée
         if ($booking->status !== 'accepted') {
             return response()->json([
                 'success' => false,
-                'message' => 'La réservation doit être acceptée avant le paiement (statut actuel: ' . $booking->status . ').',
+                'message' => 'La réservation doit être acceptée avant le paiement (statut: ' . $booking->status . ').',
             ], 422);
         }
 
-        // Vérifier si déjà payé
         $alreadyPaid = Payment::where('booking_id', $booking->id)
             ->where('status', 'success')
             ->exists();
@@ -44,14 +43,13 @@ class UserPaymentController extends Controller
             ], 422);
         }
 
-        // Créer le paiement
         $payment = Payment::create([
             'user_id'         => Auth::id(),
             'trip_id'         => $booking->trip_id,
             'driver_id'       => $booking->trip->driver_id,
             'booking_id'      => $booking->id,
             'amount'          => $booking->amount,
-            'commission'      => $booking->amount * 0.10, // 10% commission
+            'commission'      => $booking->amount * 0.10,
             'driver_net'      => $booking->amount * 0.90,
             'method'          => 'mobile_money',
             'status'          => 'pending',
@@ -61,25 +59,24 @@ class UserPaymentController extends Controller
             'paid_at'         => null,
         ]);
 
-        // ── Ici tu intègres ton API Mobile Money (MTN, Airtel, Orange) ──
+        // ── Intégration Mobile Money ici ─────────────────────────────
         // $response = MobileMoneyService::pay($request->phone, $booking->amount);
-        // Pour l'instant on simule un succès :
-        $payment->update([
-            'status'  => 'success',
-            'paid_at' => now(),
-        ]);
-
-        // Mettre à jour le statut de la réservation
+        $payment->update(['status' => 'success', 'paid_at' => now()]);
         $booking->update(['status' => 'paid']);
+
+        // 🔔 Notifier client ET chauffeur — chat débloqué
+        PaymentValidated::dispatch($booking->load('trip'));
 
         return response()->json([
             'success' => true,
-            'message' => 'Paiement effectué avec succès.',
+            'message' => 'Paiement effectué avec succès. Le chat avec le chauffeur est maintenant disponible.',
             'data'    => [
                 'payment'         => $payment,
                 'transaction_ref' => $payment->transaction_ref,
                 'amount'          => $payment->amount,
                 'status'          => $payment->status,
+                'chat_enabled'    => true,
+                'chat_channel'    => 'chat.trip.' . $booking->trip_id,
             ],
         ]);
     }
@@ -88,8 +85,8 @@ class UserPaymentController extends Controller
     public function stripe(Request $request)
     {
         $request->validate([
-            'booking_id'       => 'required|exists:bookings,id',
-            'payment_method_id'=> 'required|string', // token Stripe
+            'booking_id'        => 'required|exists:bookings,id',
+            'payment_method_id' => 'required|string',
         ]);
 
         $booking = Booking::with('trip')
@@ -119,25 +116,23 @@ class UserPaymentController extends Controller
             'paid_at'         => null,
         ]);
 
-        // ── Ici tu intègres Stripe ───────────────────────────────────
-        // $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
-        // $intent = $stripe->paymentIntents->create([...]);
-        // Pour l'instant on simule :
-        $payment->update([
-            'status'  => 'success',
-            'paid_at' => now(),
-        ]);
-
+        // ── Intégration Stripe ici ───────────────────────────────────
+        $payment->update(['status' => 'success', 'paid_at' => now()]);
         $booking->update(['status' => 'paid']);
+
+        // 🔔 Notifier client ET chauffeur — chat débloqué
+        PaymentValidated::dispatch($booking->load('trip'));
 
         return response()->json([
             'success' => true,
-            'message' => 'Paiement Stripe effectué avec succès.',
+            'message' => 'Paiement Stripe effectué. Le chat avec le chauffeur est maintenant disponible.',
             'data'    => [
                 'payment'         => $payment,
                 'transaction_ref' => $payment->transaction_ref,
                 'amount'          => $payment->amount,
                 'status'          => $payment->status,
+                'chat_enabled'    => true,
+                'chat_channel'    => 'chat.trip.' . $booking->trip_id,
             ],
         ]);
     }
@@ -162,6 +157,8 @@ class UserPaymentController extends Controller
                 'method'          => $payment->method,
                 'status'          => $payment->status,
                 'paid_at'         => $payment->paid_at,
+                'chat_enabled'    => $payment->status === 'success',
+                'chat_channel'    => 'chat.trip.' . $payment->trip_id,
             ],
         ]);
     }
