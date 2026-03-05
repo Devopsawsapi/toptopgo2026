@@ -148,7 +148,7 @@ Route::prefix('driver')->name('api.driver.')->middleware(['auth:sanctum'])->grou
     Route::get('profile',  [DriverProfileController::class, 'show'])->name('profile.show');
     Route::put('profile',  [DriverProfileController::class, 'update'])->name('profile.update');
     // ✅ FIX: upload photo de profil chauffeur (résout l'erreur "Erreur upload : 404")
-    Route::post('profile/photo', [DriverProfileController::class, 'uploadPhoto'])->name('profile.photo');
+    Route::post('profile/photo', [DriverProfileController::class, 'updatePhoto'])->name('profile.photo');
 
     Route::put('password', [DriverPasswordController::class, 'update'])->name('password.update');
     Route::put('status',   [DriverStatusController::class, 'update'])->name('status.update');

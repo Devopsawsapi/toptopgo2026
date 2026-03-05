@@ -14,6 +14,7 @@ use App\Observers\CourseObserver;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Artisan;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,6 +36,11 @@ class AppServiceProvider extends ServiceProvider
         // ✅ Force HTTPS en production
         if (config('app.env') === 'production') {
             URL::forceScheme('https');
+        }
+
+        // ✅ FIX: crée le lien symbolique storage si absent (résout les 404 sur photos)
+        if (!file_exists(public_path('storage'))) {
+            Artisan::call('storage:link');
         }
     }
 }
