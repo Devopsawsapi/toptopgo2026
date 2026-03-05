@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\CommissionRateController;
 use App\Http\Controllers\Admin\PaymentPartnerController;
 use App\Http\Controllers\Admin\SosAlertController;
 use App\Http\Controllers\Admin\MapController;
+use App\Http\Controllers\Admin\TripController; // ✅ Ajouté
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -57,11 +58,22 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         /*
         |--------------------------------------------------------------------------
-        | GÉOLOCALISATION LIVE
+        | GÉOLOCALISATION LIVE (carte)
         |--------------------------------------------------------------------------
         */
         Route::get('geolocation', [MapController::class, 'index'])->name('geolocation');
         Route::get('geolocation/trips', [MapController::class, 'trips'])->name('geolocation.trips');
+
+        /*
+        |--------------------------------------------------------------------------
+        | TRAJETS & COURSES ✅ Ajouté
+        |--------------------------------------------------------------------------
+        */
+        Route::prefix('trips')->name('trips.')->group(function () {
+            Route::get('/',            [TripController::class, 'index'])->name('index');
+            Route::get('/{id}/detail', [TripController::class, 'detail'])->name('detail');
+            Route::get('/{id}',        [TripController::class, 'show'])->name('show');
+        });
 
         /*
         |--------------------------------------------------------------------------
@@ -134,7 +146,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         /*
         |--------------------------------------------------------------------------
-        | ✅ SOS ALERTES
+        | SOS ALERTES
         |--------------------------------------------------------------------------
         */
         Route::prefix('sos')->name('sos.')->group(function () {
@@ -152,13 +164,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         |--------------------------------------------------------------------------
         */
         Route::prefix('revenus')->name('revenus.')->group(function () {
-            Route::get('/', [RevenueController::class, 'index'])->name('index');
-            Route::get('/stats', [RevenueController::class, 'stats'])->name('stats');
-            Route::get('/by-country', [RevenueController::class, 'byCountry'])->name('by-country');
-            Route::get('/by-city', [RevenueController::class, 'byCity'])->name('by-city');
-            Route::get('/by-driver', [RevenueController::class, 'byDriver'])->name('by-driver');
-            Route::get('/by-client', [RevenueController::class, 'byClient'])->name('by-client');
-            Route::get('/export', [RevenueController::class, 'export'])->name('export');
+            Route::get('/',            [RevenueController::class, 'index'])->name('index');
+            Route::get('/stats',       [RevenueController::class, 'stats'])->name('stats');
+            Route::get('/by-country',  [RevenueController::class, 'byCountry'])->name('by-country');
+            Route::get('/by-city',     [RevenueController::class, 'byCity'])->name('by-city');
+            Route::get('/by-driver',   [RevenueController::class, 'byDriver'])->name('by-driver');
+            Route::get('/by-client',   [RevenueController::class, 'byClient'])->name('by-client');
+            Route::get('/export',      [RevenueController::class, 'export'])->name('export');
         });
 
         /*
@@ -167,10 +179,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         |--------------------------------------------------------------------------
         */
         Route::prefix('commission-rates')->name('commission-rates.')->group(function () {
-            Route::get('/export', [CommissionRateController::class, 'export'])->name('export');
-            Route::get('/', [CommissionRateController::class, 'index'])->name('index');
-            Route::post('/', [CommissionRateController::class, 'store'])->name('store');
-            Route::put('/{commissionRate}', [CommissionRateController::class, 'update'])->name('update');
+            Route::get('/export',              [CommissionRateController::class, 'export'])->name('export');
+            Route::get('/',                    [CommissionRateController::class, 'index'])->name('index');
+            Route::post('/',                   [CommissionRateController::class, 'store'])->name('store');
+            Route::put('/{commissionRate}',    [CommissionRateController::class, 'update'])->name('update');
             Route::delete('/{commissionRate}', [CommissionRateController::class, 'destroy'])->name('destroy');
         });
 
@@ -182,7 +194,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('payments', [PaymentPartnerController::class, 'index'])->name('payments.index');
         Route::get('payments/export', [PaymentPartnerController::class, 'export'])->name('payments.export');
         Route::post('payments/withdrawals/{withdrawal}/approve', [PaymentPartnerController::class, 'approveWithdrawal'])->name('payments.approve-withdrawal');
-        Route::post('payments/withdrawals/{withdrawal}/reject', [PaymentPartnerController::class, 'rejectWithdrawal'])->name('payments.reject-withdrawal');
+        Route::post('payments/withdrawals/{withdrawal}/reject',  [PaymentPartnerController::class, 'rejectWithdrawal'])->name('payments.reject-withdrawal');
 
     });
 
