@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\Driver\Driver;   // ✅ namespace réel : App\Models\Driver\Driver
-use App\Models\User\User;       // ✅ namespace réel : App\Models\User\User
+use App\Models\Driver\Driver;
+use App\Models\User\User;
+use App\Models\Message; // relation messages
 
 class Trip extends Model
 {
@@ -81,6 +82,12 @@ class Trip extends Model
     public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+
+    // relation messages client ↔ chauffeur
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
     }
 
     public function getConfirmedSeatsAttribute(): int
