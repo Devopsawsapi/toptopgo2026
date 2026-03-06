@@ -4,45 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\Driver\Driver;   // ✅ FIX : namespace réel du modèle Driver
+use App\Models\Driver\Driver;
 
 class Trip extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'driver_id',
-        'user_id',
-        'departure',
-        'pickup_address',
-        'pickup_point',
-        'departure_city',
-        'pickup_lat',
-        'pickup_lng',
-        'destination',
-        'dropoff_address',
-        'dropoff_point',
-        'destination_city',
-        'dropoff_lat',
-        'dropoff_lng',
-        'departure_date',
-        'departure_time',
-        'price_per_seat',
-        'amount',
-        'commission',
-        'driver_net',
-        'available_seats',
-        'total_seats',
-        'luggage_included',
-        'luggage_kg',
-        'luggage_weight_kg',
-        'extra_luggage_fee',
-        'extra_luggage_slots',
-        'vehicle_type',
-        'distance_km',
-        'status',
-        'started_at',
-        'completed_at',
+        'driver_id', 'user_id',
+        'departure', 'pickup_address', 'pickup_point', 'departure_city',
+        'pickup_lat', 'pickup_lng',
+        'destination', 'dropoff_address', 'dropoff_point', 'destination_city',
+        'dropoff_lat', 'dropoff_lng',
+        'departure_date', 'departure_time',
+        'price_per_seat', 'amount', 'commission', 'driver_net',
+        'available_seats', 'total_seats',
+        'luggage_included', 'luggage_kg', 'luggage_weight_kg',
+        'extra_luggage_fee', 'extra_luggage_slots',
+        'vehicle_type', 'distance_km',
+        'status', 'started_at', 'completed_at',
     ];
 
     protected $casts = [
@@ -68,12 +48,11 @@ class Trip extends Model
 
     public function driver()
     {
-        // ✅ App\Models\Driver\Driver — namespace sous-dossier
         return $this->belongsTo(Driver::class)->withDefault([
-            'first_name' => 'Chauffeur',
-            'last_name'  => '',
-            'phone'      => '',
-            'rating'     => 0,
+            'first_name'    => 'Chauffeur',
+            'last_name'     => '',
+            'phone'         => '',
+            'rating'        => 0,
             'profile_photo' => null,
         ]);
     }
@@ -86,5 +65,21 @@ class Trip extends Model
     public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * ✅ FIX : relation "vehicle" attendue par Admin\TripController
+     * Le véhicule est porté par le chauffeur — on passe par lui
+     * Retourne un objet avec les infos véhicule du Driver
+     */
+    public function vehicle()
+    {
+        return $this->belongsTo(Driver::class, 'driver_id')->withDefault([
+            'vehicle_type'  => '',
+            'vehicle_brand' => '',
+            'vehicle_model' => '',
+            'vehicle_color' => '',
+            'vehicle_plate' => '',
+        ]);
     }
 }
