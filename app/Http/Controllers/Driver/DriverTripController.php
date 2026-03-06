@@ -43,37 +43,29 @@ class DriverTripController extends Controller
 
         $price = (float) ($request->price_per_seat ?? 0);
         $seats = (int)   ($request->available_seats ?? 3);
-        // Conserver uniquement HH:mm:ss (VARCHAR DB)
         $time  = substr($request->departure_time ?? '08:00', 0, 8);
-        if (strlen($time) === 5) $time .= ':00'; // HH:mm → HH:mm:ss
+        if (strlen($time) === 5) $time .= ':00';
 
         $trip = Trip::create([
             'driver_id'           => Auth::id(),
-            // ── Itinéraire ──
             'departure'           => $request->departure,
             'pickup_address'      => $request->departure,
             'destination'         => $request->destination,
             'dropoff_address'     => $request->destination,
             'departure_city'      => $request->departure,
             'destination_city'    => $request->destination,
-            // ── Lieu précis ──
             'pickup_point'        => $request->pickup_point  ?? null,
             'dropoff_point'       => $request->dropoff_point ?? null,
-            // ── Tarification ──
             'price_per_seat'      => $price,
             'amount'              => $price * $seats,
             'available_seats'     => $seats,
-            // ── Date & heure ──
             'departure_date'      => $request->departure_date,
             'departure_time'      => $time,
-            // ── Bagages ──
             'luggage_included'    => (int)   ($request->luggage_included    ?? 1),
             'luggage_weight_kg'   => (float) ($request->luggage_weight_kg   ?? 20),
             'extra_luggage_fee'   => (float) ($request->extra_luggage_fee   ?? 0),
             'extra_luggage_slots' => (int)   ($request->extra_luggage_slots ?? 0),
-            // ── Véhicule ──
             'vehicle_type'        => substr($request->vehicle_type ?? '', 0, 100),
-            // ── Statut initial ──
             'status'              => 'pending',
         ]);
 
@@ -88,12 +80,8 @@ class DriverTripController extends Controller
     public function show($id)
     {
         $trip = Trip::where('driver_id', Auth::id())
-            ->withCount('bookings')
-            ->find($id);
-
-        if (!$trip) return response()->json([
-            'success' => false, 'message' => 'Introuvable'], 404);
-
+            ->withCount('bookings')->find($id);
+        if (!$trip) return response()->json(['success' => false, 'message' => 'Introuvable'], 404);
         return response()->json(['success' => true, 'data' => $this->fmt($trip)]);
     }
 
@@ -101,42 +89,28 @@ class DriverTripController extends Controller
     public function update(Request $request, $id)
     {
         $trip = Trip::where('driver_id', Auth::id())->find($id);
-        if (!$trip) return response()->json([
-            'success' => false, 'message' => 'Introuvable'], 404);
-
+        if (!$trip) return response()->json(['success' => false, 'message' => 'Introuvable'], 404);
         if (in_array($trip->status, ['in_progress', 'completed'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Impossible de modifier ce trajet.'], 422);
+            return response()->json(['success' => false, 'message' => 'Impossible de modifier ce trajet.'], 422);
         }
-
         $trip->update($request->only([
             'departure', 'destination', 'pickup_point', 'dropoff_point',
             'price_per_seat', 'amount', 'available_seats',
             'departure_date', 'departure_time',
             'luggage_included', 'luggage_weight_kg',
-            'extra_luggage_fee', 'extra_luggage_slots',
-            'vehicle_type',
+            'extra_luggage_fee', 'extra_luggage_slots', 'vehicle_type',
         ]));
-
-        return response()->json([
-            'success' => true,
-            'data'    => $this->fmt($trip->fresh())]);
+        return response()->json(['success' => true, 'data' => $this->fmt($trip->fresh())]);
     }
 
     // ── Supprimer un trajet ───────────────────────────────────────────────
     public function destroy($id)
     {
         $trip = Trip::where('driver_id', Auth::id())->find($id);
-        if (!$trip) return response()->json([
-            'success' => false, 'message' => 'Introuvable'], 404);
-
+        if (!$trip) return response()->json(['success' => false, 'message' => 'Introuvable'], 404);
         if ($trip->status === 'in_progress') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Trajet en cours, impossible de supprimer.'], 422);
+            return response()->json(['success' => false, 'message' => 'Trajet en cours, impossible de supprimer.'], 422);
         }
-
         $trip->delete();
         return response()->json(['success' => true, 'message' => 'Trajet supprimé.']);
     }
@@ -145,13 +119,10 @@ class DriverTripController extends Controller
     public function start(Request $request, $id)
     {
         $trip = Trip::where('driver_id', Auth::id())->find($id);
-        if (!$trip) return response()->json([
-            'success' => false, 'message' => 'Introuvable'], 404);
+        if (!$trip) return response()->json(['success' => false, 'message' => 'Introuvable'], 404);
 
         $confirmed = Booking::where('trip_id', $trip->id)
-            ->whereIn('status', ['confirmed', 'paid'])
-            ->sum('seats');
-
+            ->whereIn('status', ['confirmed', 'paid'])->sum('seats');
         $total   = (int) ($trip->available_seats ?? 0) + (int) $confirmed;
         $allFull = $total > 0 && $confirmed >= $total;
         $force   = $request->boolean('force', false);
@@ -167,7 +138,6 @@ class DriverTripController extends Controller
         }
 
         $trip->update(['status' => 'in_progress', 'started_at' => now()]);
-
         return response()->json([
             'success' => true,
             'message' => 'Trajet démarré ! Bonne route 🚗',
@@ -179,18 +149,13 @@ class DriverTripController extends Controller
     public function end($id)
     {
         $trip = Trip::where('driver_id', Auth::id())->find($id);
-        if (!$trip) return response()->json([
-            'success' => false, 'message' => 'Introuvable'], 404);
-
+        if (!$trip) return response()->json(['success' => false, 'message' => 'Introuvable'], 404);
         $trip->update(['status' => 'completed', 'completed_at' => now()]);
-
         Booking::where('trip_id', $trip->id)
             ->whereIn('status', ['confirmed', 'paid'])
             ->update(['status' => 'completed']);
-
         return response()->json([
-            'success' => true,
-            'message' => 'Trajet terminé 🏁',
+            'success' => true, 'message' => 'Trajet terminé 🏁',
             'data'    => $this->fmt($trip->fresh()),
         ]);
     }
@@ -198,15 +163,10 @@ class DriverTripController extends Controller
     // ── Réservations du chauffeur ─────────────────────────────────────────
     public function bookings(Request $request)
     {
-        $query = Booking::whereHas('trip', fn($q) =>
-                $q->where('driver_id', Auth::id()))
+        $query = Booking::whereHas('trip', fn($q) => $q->where('driver_id', Auth::id()))
             ->with(['trip', 'user'])
             ->orderBy('created_at', 'desc');
-
-        if ($request->trip_id) {
-            $query->where('trip_id', $request->trip_id);
-        }
-
+        if ($request->trip_id) $query->where('trip_id', $request->trip_id);
         return response()->json([
             'success' => true,
             'data'    => $query->get()->map(fn($b) => $this->fmtBooking($b)),
@@ -216,18 +176,11 @@ class DriverTripController extends Controller
     // ── Confirmer une réservation ─────────────────────────────────────────
     public function confirmBooking($id)
     {
-        $booking = Booking::whereHas('trip',
-            fn($q) => $q->where('driver_id', Auth::id()))->find($id);
-
-        if (!$booking) return response()->json([
-            'success' => false, 'message' => 'Introuvable'], 404);
-
+        $booking = Booking::whereHas('trip', fn($q) => $q->where('driver_id', Auth::id()))->find($id);
+        if (!$booking) return response()->json(['success' => false, 'message' => 'Introuvable'], 404);
         $booking->update(['status' => 'confirmed']);
-
         Trip::where('id', $booking->trip_id)
-            ->decrement('available_seats',
-                (int) ($booking->seats ?? $booking->passengers ?? 1));
-
+            ->decrement('available_seats', (int) ($booking->seats ?? $booking->passengers ?? 1));
         return response()->json([
             'success' => true,
             'message' => '✅ Réservation confirmée. Client notifié.',
@@ -238,25 +191,15 @@ class DriverTripController extends Controller
     // ── Refuser une réservation ───────────────────────────────────────────
     public function rejectBooking(Request $request, $id)
     {
-        $booking = Booking::whereHas('trip',
-            fn($q) => $q->where('driver_id', Auth::id()))->find($id);
-
-        if (!$booking) return response()->json([
-            'success' => false, 'message' => 'Introuvable'], 404);
-
+        $booking = Booking::whereHas('trip', fn($q) => $q->where('driver_id', Auth::id()))->find($id);
+        if (!$booking) return response()->json(['success' => false, 'message' => 'Introuvable'], 404);
         $booking->update([
             'status'           => 'rejected',
             'rejection_reason' => $request->reason ?? '',
         ]);
-
         Trip::where('id', $booking->trip_id)
-            ->increment('available_seats',
-                (int) ($booking->seats ?? $booking->passengers ?? 1));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Réservation refusée.',
-        ]);
+            ->increment('available_seats', (int) ($booking->seats ?? $booking->passengers ?? 1));
+        return response()->json(['success' => true, 'message' => 'Réservation refusée.']);
     }
 
     // ── Formatage trajet ──────────────────────────────────────────────────
@@ -264,11 +207,11 @@ class DriverTripController extends Controller
     {
         $confirmed = Booking::where('trip_id', $t->id)
             ->whereIn('status', ['confirmed','paid'])->sum('seats');
-        $total  = (int) ($t->available_seats ?? 0) + (int) $confirmed;
-        $price  = (float) ($t->price_per_seat ?? $t->amount ?? 0);
-        $time   = $t->departure_time ?? '';
+        $total = (int) ($t->available_seats ?? 0) + (int) $confirmed;
+        $price = (float) ($t->price_per_seat ?? $t->amount ?? 0);
+        $time  = $t->departure_time ?? '';
         if (strlen($time) > 5) $time = substr($time, 0, 5);
-        $date   = $t->departure_date
+        $date  = $t->departure_date
             ? ($t->departure_date instanceof \Carbon\Carbon
                 ? $t->departure_date->format('Y-m-d')
                 : \Carbon\Carbon::parse($t->departure_date)->format('Y-m-d'))
@@ -325,16 +268,15 @@ class DriverTripController extends Controller
                 'profile_photo' => $photo,
             ] : null,
             'trip' => $b->trip ? [
-                'departure'      => $b->trip->departure      ?? '',
-                'destination'    => $b->trip->destination    ?? '',
-                'departure_date' => $b->trip->departure_date
+                'departure'           => $b->trip->departure      ?? '',
+                'destination'         => $b->trip->destination    ?? '',
+                'departure_date'      => $b->trip->departure_date
                     ? \Carbon\Carbon::parse($b->trip->departure_date)->format('Y-m-d')
                     : null,
-                'departure_time' => $b->trip->departure_time
-                    ? substr($b->trip->departure_time, 0, 5)
-                    : null,
-                'price_per_seat' => (float) ($b->trip->price_per_seat ?? $b->trip->amount ?? 0),
-                'pickup_point'   => $b->trip->pickup_point  ?? null,
+                'departure_time'      => $b->trip->departure_time
+                    ? substr($b->trip->departure_time, 0, 5) : null,
+                'price_per_seat'      => (float) ($b->trip->price_per_seat ?? $b->trip->amount ?? 0),
+                'pickup_point'        => $b->trip->pickup_point        ?? null,
                 'luggage_weight_kg'   => (float) ($b->trip->luggage_weight_kg   ?? 20),
                 'extra_luggage_fee'   => (float) ($b->trip->extra_luggage_fee   ?? 0),
                 'extra_luggage_slots' => (int)   ($b->trip->extra_luggage_slots ?? 0),
@@ -342,4 +284,3 @@ class DriverTripController extends Controller
         ];
     }
 }
-

@@ -8,25 +8,17 @@ use Illuminate\Http\Request;
 
 class UserTripController extends Controller
 {
-    /**
-     * GET /api/user/trips
-     * Paramètres acceptés :
-     *   departure   : ville départ (aussi pickup=)
-     *   destination : ville arrivée (aussi dropoff=)
-     *   date        : YYYY-MM-DD (optionnel, défaut = aujourd'hui et futur)
-     *   time        : HH:mm (optionnel, filtre ±1h)
-     *   passengers  : int (défaut 1)
-     */
     public function index(Request $request)
     {
-        // ✅ FIX : on charge tout le driver sans spécifier les colonnes
-        // pour éviter "Unknown column 'rating'" si la colonne n'existe pas
+        // ✅ FIX : ->with(['driver']) sans lister les colonnes
+        // Évite "Unknown column 'rating'" si la colonne n'existe pas en DB
         $query = Trip::with(['driver'])
             ->whereIn('status', ['pending', 'accepted'])
             ->where('available_seats', '>=', 1);
 
         // ── Filtre départ ──────────────────────────────────────────────
-        $dep = $request->departure ?? $request->pickup ?? null;
+        $dep = $request->filled('departure') ? $request->departure
+             : ($request->filled('pickup')   ? $request->pickup : null);
         if ($dep) {
             $query->where(function ($q) use ($dep) {
                 $q->where('pickup_address',   'like', "%$dep%")
@@ -36,7 +28,8 @@ class UserTripController extends Controller
         }
 
         // ── Filtre destination ─────────────────────────────────────────
-        $dest = $request->destination ?? $request->dropoff ?? null;
+        $dest = $request->filled('destination') ? $request->destination
+              : ($request->filled('dropoff')    ? $request->dropoff : null);
         if ($dest) {
             $query->where(function ($q) use ($dest) {
                 $q->where('dropoff_address',   'like', "%$dest%")
@@ -72,7 +65,7 @@ class UserTripController extends Controller
         $passengers = max(1, (int) $request->get('passengers', 1));
         $query->where('available_seats', '>=', $passengers);
 
-        // ── Tri ────────────────────────────────────────────────────────
+        // ── Tri : trajets avec date d'abord, puis sans date ────────────
         $trips = $query
             ->orderByRaw("ISNULL(departure_date), departure_date ASC")
             ->orderBy('departure_time', 'asc')
@@ -86,11 +79,9 @@ class UserTripController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/user/trips/{id}
-     */
     public function show($id)
     {
+        // ✅ FIX : même correction ici
         $trip = Trip::with(['driver'])->findOrFail($id);
         return response()->json([
             'success' => true,
@@ -98,7 +89,6 @@ class UserTripController extends Controller
         ]);
     }
 
-    // ── Formatage ──────────────────────────────────────────────────────────
     private function fmt(Trip $trip): array
     {
         $price = (float) ($trip->price_per_seat ?? $trip->amount ?? 0);
@@ -116,17 +106,17 @@ class UserTripController extends Controller
 
         $driver = $trip->driver;
         $photo  = null;
-        if ($driver?->profile_photo) {
-            $p = $driver->profile_photo;
-            // getProfilePhotoAttribute() du modèle Driver gère Backblaze
-            $photo = str_starts_with($p, 'http') ? $p : asset('storage/' . $p);
+        if ($driver && $driver->profile_photo) {
+            $photo = str_starts_with($driver->profile_photo, 'http')
+                ? $driver->profile_photo
+                : asset('storage/' . $driver->profile_photo);
         }
 
-        // ✅ rating optionnel — null si colonne absente en DB
+        // ✅ rating optionnel : null si colonne absente en DB
         $rating      = null;
         $ratingCount = null;
-        try { $rating      = $driver ? $driver->rating       : null; } catch (\Exception $e) {}
-        try { $ratingCount = $driver ? $driver->rating_count : null; } catch (\Exception $e) {}
+        try { $rating      = $driver?->rating;       } catch (\Exception $e) {}
+        try { $ratingCount = $driver?->rating_count; } catch (\Exception $e) {}
 
         return [
             'id'                  => $trip->id,
@@ -151,9 +141,9 @@ class UserTripController extends Controller
             'driver'              => $driver ? [
                 'id'           => $driver->id,
                 'name'         => trim(($driver->first_name ?? '') . ' ' . ($driver->last_name ?? '')),
-                'first_name'   => $driver->first_name  ?? '',
-                'last_name'    => $driver->last_name   ?? '',
-                'phone'        => $driver->phone        ?? '',
+                'first_name'   => $driver->first_name ?? '',
+                'last_name'    => $driver->last_name  ?? '',
+                'phone'        => $driver->phone      ?? '',
                 'rating'       => $rating,
                 'rating_count' => $ratingCount,
                 'photo'        => $photo,
