@@ -4,59 +4,42 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Driver\Driver;   // ✅ FIX : namespace réel du modèle Driver
 
 class Trip extends Model
 {
     use HasFactory;
 
-    // ✅ FIX PRINCIPAL : tous les champs doivent être ici
-    // Sans ça, Trip::create([...]) ignore silencieusement les champs non listés
     protected $fillable = [
-        // ── Identité ──
         'driver_id',
         'user_id',
-
-        // ── Itinéraire ──
         'departure',
         'pickup_address',
-        'pickup_point',          // lieu précis embarquement
+        'pickup_point',
         'departure_city',
         'pickup_lat',
         'pickup_lng',
-
         'destination',
         'dropoff_address',
-        'dropoff_point',         // lieu précis de dépose
+        'dropoff_point',
         'destination_city',
         'dropoff_lat',
         'dropoff_lng',
-
-        // ── Date & heure ──
-        'departure_date',        // ✅ était manquant
-        'departure_time',        // ✅ était manquant
-
-        // ── Tarification ──
-        'price_per_seat',        // ✅ était manquant — c'est pour ça que prix = 0
+        'departure_date',
+        'departure_time',
+        'price_per_seat',
         'amount',
         'commission',
         'driver_net',
-
-        // ── Places ──
-        'available_seats',       // ✅ était manquant
+        'available_seats',
         'total_seats',
-
-        // ── Bagages ──
         'luggage_included',
         'luggage_kg',
         'luggage_weight_kg',
         'extra_luggage_fee',
         'extra_luggage_slots',
-
-        // ── Véhicule ──
         'vehicle_type',
         'distance_km',
-
-        // ── Statut ──
         'status',
         'started_at',
         'completed_at',
@@ -82,31 +65,26 @@ class Trip extends Model
     ];
 
     // ── Relations ──────────────────────────────────────────────────────────
+
     public function driver()
     {
-        return $this->belongsTo(Driver::class);
+        // ✅ App\Models\Driver\Driver — namespace sous-dossier
+        return $this->belongsTo(Driver::class)->withDefault([
+            'first_name' => 'Chauffeur',
+            'last_name'  => '',
+            'phone'      => '',
+            'rating'     => 0,
+            'profile_photo' => null,
+        ]);
     }
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withDefault();
     }
 
     public function bookings()
     {
         return $this->hasMany(Booking::class);
-    }
-
-    // ── Accesseurs utiles ──────────────────────────────────────────────────
-    public function getConfirmedSeatsAttribute(): int
-    {
-        return (int) $this->bookings()
-            ->whereIn('status', ['confirmed', 'paid'])
-            ->sum('seats');
-    }
-
-    public function getPriceAttribute(): float
-    {
-        return (float) ($this->price_per_seat ?? $this->amount ?? 0);
     }
 }
