@@ -25,7 +25,7 @@ class UserBookingController extends Controller
         ]);
     }
 
-    // ── Détail d'une réservation ─────────────────────────────────────
+    // ── Détail ───────────────────────────────────────────────────────
     public function show($id)
     {
         $booking = Booking::with(['trip.driver'])
@@ -36,65 +36,47 @@ class UserBookingController extends Controller
     }
 
     /**
-     * ✅ FIX store() :
-     * - Sauvegarde seats (nombre de places réservées)
-     * - Sauvegarde amount (prix total)
-     * - Décrémente available_seats sur le Trip
-     * - Vérifie qu'il y a assez de places disponibles
+     * ✅ FIX 1 : seats + amount sauvegardés + available_seats décrémenté
+     * ✅ FIX 2 : suppression du blocage "déjà réservé" pour permettre
+     *            de réserver plusieurs places pour d'autres passagers
      */
     public function store(Request $request)
     {
         $request->validate([
-            'trip_id'     => 'required|exists:trips,id',
-            'seats_booked'=> 'nullable|integer|min:1|max:20',
-            'extra_bags'  => 'nullable|integer|min:0',
-            'total_price' => 'nullable|numeric|min:0',
+            'trip_id'      => 'required|exists:trips,id',
+            'seats_booked' => 'nullable|integer|min:1|max:20',
+            'extra_bags'   => 'nullable|integer|min:0',
+            'total_price'  => 'nullable|numeric|min:0',
         ]);
 
         $seats = max(1, (int) ($request->seats_booked ?? 1));
-
-        // Vérifier si déjà réservé
-        $exists = Booking::where('user_id', Auth::id())
-            ->where('trip_id', $request->trip_id)
-            ->whereIn('status', ['pending', 'confirmed', 'paid'])
-            ->exists();
-
-        if ($exists) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous avez déjà réservé ce trajet.',
-            ], 422);
-        }
+        $trip  = Trip::findOrFail($request->trip_id);
 
         // ✅ Vérifier places disponibles
-        $trip = Trip::findOrFail($request->trip_id);
-
         if ($trip->available_seats < $seats) {
             return response()->json([
                 'success' => false,
-                'message' => "Seulement {$trip->available_seats} place(s) disponible(s).",
+                'message' => "Seulement {$trip->available_seats} place(s) disponible(s) sur ce trajet.",
             ], 422);
         }
 
         // Calcul montant
-        $pricePerSeat = (float) ($trip->price_per_seat ?? $trip->amount ?? 0);
-        $extraFee     = (float) ($request->total_price ?? 0) - ($pricePerSeat * $seats);
+        $pricePerSeat = (float) ($trip->price_per_seat ?? 0);
         $totalAmount  = (float) ($request->total_price ?? $pricePerSeat * $seats);
 
-        // ✅ Créer la réservation avec seats + amount
+        // ✅ Créer la réservation
         $booking = Booking::create([
             'user_id'    => Auth::id(),
             'trip_id'    => $request->trip_id,
-            'seats'      => $seats,          // ✅ nombre de places
-            'passengers' => $seats,          // alias selon votre migration
-            'amount'     => $totalAmount,    // ✅ montant total
+            'seats'      => $seats,
+            'passengers' => $seats,
+            'amount'     => $totalAmount,
             'extra_bags' => $request->extra_bags ?? 0,
-            'extra_fee'  => max(0, $extraFee),
             'status'     => 'pending',
             'booked_at'  => now(),
         ]);
 
-        // ✅ Décrémenter les places disponibles sur le trajet
+        // ✅ Décrémenter les places disponibles
         $trip->decrement('available_seats', $seats);
 
         return response()->json([
@@ -105,7 +87,7 @@ class UserBookingController extends Controller
         ], 201);
     }
 
-    // ── Annuler une réservation ──────────────────────────────────────
+    // ── Annuler ──────────────────────────────────────────────────────
     public function cancel($id)
     {
         $booking = Booking::where('user_id', Auth::id())->findOrFail($id);
@@ -119,7 +101,7 @@ class UserBookingController extends Controller
 
         $booking->update(['status' => 'cancelled']);
 
-        // ✅ Remettre les places disponibles
+        // ✅ Remettre les places
         Trip::where('id', $booking->trip_id)
             ->increment('available_seats', (int) ($booking->seats ?? $booking->passengers ?? 1));
 
@@ -129,7 +111,6 @@ class UserBookingController extends Controller
         ]);
     }
 
-    // ── Accepter / Rejeter (si workflow double confirmation) ─────────
     public function accept($id)
     {
         $booking = Booking::where('user_id', Auth::id())->findOrFail($id);
